@@ -12,7 +12,7 @@
   "rules": {},
   "overrides": [
     {
-      "files": ["src/**/*.{ts,vue}"],
+      "files": ["src/renderer/**/*.{ts,vue}"],
       "plugins": ["vue"],
       "env": {
         "browser": true
@@ -20,7 +20,18 @@
       "rules": {
         "import/no-unassigned-import": ["warn", { "allow": ["**/*.css"] }]
       }
+    },
+    {
+      "files": ["src/electron/**/*.ts"],
+      "plugins": ["node"],
+      "env": { "node": true }
+    },
+    {
+      "files": ["vite-plugin-tsdown/**"],
+      "rules": {
+        "no-underscore-dangle": ["warn", { "allow": ["_vpt"] }]
+      }
     }
   ],
-  "ignorePatterns": ["dist/**"]
+  "ignorePatterns": ["dist*/**"]
 }

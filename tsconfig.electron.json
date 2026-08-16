@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.electron.tsbuildinfo",
+
+    // 實際不用 tsc 編譯, 關閉才不會要求所有引用都要被 include
+    "composite": false,
+    "noEmit": true,
+    "types": ["node", "vite/types/importMeta.d.ts"],
+
+    "target": "es2024",
+    "lib": ["ES2025"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "allowImportingTsExtensions": true,
+    "forceConsistentCasingInFileNames": true,
+    "libReplacement": false,
+
+    /* Linting */
+    "strict": true,
+    // 對 object, array 取值不明確時, 追加 undefined
+    "noUncheckedIndexedAccess": true,
+    // 強制 import type, 但啟用後 tsc 就不會根據 format 轉譯 import / require
+    "verbatimModuleSyntax": true,
+
+    "paths": {
+      "@/*": ["./src/electron/*"]
+    }
+  },
+  "include": ["src/electron"]
+}
