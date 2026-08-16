@@ -5,23 +5,27 @@ import electronPath from 'electron'
 
 import { cyan } from './simpleColor.ts'
 
+interface CustomSpawnOptions extends SpawnOptions {
+  /** @deprecated Use `onAbort: () => killElectron()` instead. */
+  signal?: SpawnOptions['signal']
+  onAbort(this: AbortSignal, ev: Event): any
+}
+
 /**
  * electron argv path 給 `.` 會以 packageJson.main 作為進入點
  * @param argv default is `['.', '--no-sandbox']`
  */
-export function spawnElectron(argv = ['.', '--no-sandbox'], options?: SpawnOptions) {
+export function spawnElectron(argv = ['.', '--no-sandbox'], options?: CustomSpawnOptions) {
   // 存到 global process 上, 避免 vite config 熱更新時丟失
   process._vpt.electronProc = spawn(electronPath as unknown as string, argv, {
     stdio: 'inherit',
     ...options,
   })
 
-  // 手控 abort 來自定義 kill 行為, 方便之後可能需要改用 tree-kill 的情況
-  // 用 onabort 賦值而非 addEventListener, 讓外面可以覆蓋
-  if (process._vpt.ab) {
-    // TODO 考慮改 addEventListener 帶入 cb 參數
-    // oxlint-disable-next-line unicorn/prefer-add-event-listener
-    process._vpt.ab.signal.onabort = () => killElectron('electron restart.')
+  // 手控 abort 來自定義 kill 行為較好處理, 讓 spawn 處理會拋 AbortError 觸發 onError 與 onClose
+  if (process._vpt.ab && !process._vpt.ab.signal.aborted) {
+    const onAbort = options?.onAbort || (() => killElectron('electron restart.'))
+    process._vpt.ab.signal.addEventListener('abort', onAbort)
   }
 
   process._vpt.electronProc.once('close', () => {
@@ -38,13 +42,14 @@ export function spawnElectron(argv = ['.', '--no-sandbox'], options?: SpawnOptio
   return process._vpt.electronProc
 }
 
-function killElectron(exitMsg: string) {
+/** 遇到子程序砍不掉的情況, 可改用 npm `tree-kill`. */
+export function killElectron(exitMsg?: string) {
   if (!process._vpt.electronProc) return
+  // 使其不觸發 onClose 等監聽
   process._vpt.electronProc.removeAllListeners()
-  // TODO 沒有 msg 可以不掛監聽
-  process._vpt.electronProc.once('exit', () => {
-    if (exitMsg) console.log(cyan('[tsdown]'), exitMsg)
-  })
+  if (exitMsg) {
+    process._vpt.electronProc.once('exit', () => console.log(cyan('[tsdown]'), exitMsg))
+  }
   process._vpt.electronProc.kill()
 }
 
