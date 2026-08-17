@@ -18,7 +18,6 @@ export default defineConfig(({ command }) => {
     clearScreen: false,
     plugins: [
       vue(),
-      // TODO shared 也許不用單獨打包出來, 直接 bundle 進去就好?
       tsdownPlugin({
         viteWatch: ['src/electron/**', 'src/shared/**'],
         onAllSuccess: isDev ? () => spawnElectron() : undefined,
