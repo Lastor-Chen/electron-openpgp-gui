@@ -9,7 +9,11 @@
   "env": {
     "builtin": true
   },
-  "rules": {},
+  "rules": {
+    "no-underscore-dangle": "off",
+    "unicorn/require-post-message-target-origin": "off",
+    "typescript/no-explicit-any": "error"
+  },
   "overrides": [
     {
       "files": ["src/renderer/**/*.{ts,vue}"],
@@ -27,9 +31,9 @@
       "env": { "node": true }
     },
     {
-      "files": ["vite-plugin-tsdown/**"],
+      "files": ["vite-plugin-tsdown/**/*.ts", "src/shared/utility-bridger/**/*.ts"],
       "rules": {
-        "no-underscore-dangle": ["warn", { "allow": ["_vpt"] }]
+        "typescript/no-explicit-any": "off"
       }
     }
   ],

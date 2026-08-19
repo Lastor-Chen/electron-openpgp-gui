@@ -5,7 +5,7 @@
     // 實際不用 tsc 編譯, 關閉才不會要求所有引用都要被 include
     "composite": false,
     "noEmit": true,
-    "types": ["node", "vite/types/importMeta.d.ts"],
+    "types": ["node", "vite/types/importMeta.d.ts", "./src/config-env.d.ts"],
 
     "target": "es2024",
     "lib": ["ES2025"],
@@ -30,8 +30,10 @@
     "verbatimModuleSyntax": true,
 
     "paths": {
-      "@/*": ["./src/electron/*"]
+      "@/*": ["./src/electron/*"],
+      "@shared/*": ["./src/shared/*"],
+      "@utility-bridger/*": ["./src/shared/utility-bridger/*"]
     }
   },
-  "include": ["src/electron"]
+  "include": ["src/electron", "src/shared/utility-bridger/electron"]
 }

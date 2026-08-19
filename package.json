@@ -2,6 +2,8 @@
   "name": "electron-openpgp-gui",
   "version": "0.0.1",
   "private": true,
+  "description": "An electron + vite architecture POC",
+  "author": "Lastor",
   "type": "module",
   "main": "dist-electron/electron/main/index.js",
   "scripts": {

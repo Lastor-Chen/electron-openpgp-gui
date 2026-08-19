@@ -23,9 +23,10 @@ export default defineConfig(({ command }) => {
         onAllSuccess: isDev ? () => spawnElectron() : undefined,
         builds: [
           {
+            // TODO 拆出 preload
             entry: [
               'src/shared/**/*.ts',
-              // 'src/electron/child/*/index.ts',
+              'src/electron/child/*/index.ts',
               'src/electron/preload/index.ts',
               'src/electron/main/index.ts',
             ],
@@ -35,14 +36,12 @@ export default defineConfig(({ command }) => {
             unbundle: true,
             tsconfig: 'tsconfig.electron.json',
             deps: {
-              neverBundle: ['electron'],
+              neverBundle: ['electron', 'vue'],
             },
             env: {
               NODE_ENV: process.env.NODE_ENV,
             },
             logLevel: isDev ? 'warn' : 'info',
-            // TODO 注意 child-utility/vue 引用 dev 依賴, 不 bundle
-            // skipNodeModulesBundle: true,
             format: {
               esm: {
                 hooks: {
@@ -60,7 +59,6 @@ export default defineConfig(({ command }) => {
                 },
                 outDir: 'dist-electron/electron/preload',
                 unbundle: false,
-                // noExternal: (id) => id.includes('@packages/child-utility'),
               },
             },
           },
@@ -70,6 +68,8 @@ export default defineConfig(({ command }) => {
     resolve: {
       alias: {
         '@': path.join(import.meta.dirname, './src/renderer'),
+        '@shared': path.join(import.meta.dirname, './src/shared'),
+        '@utility-bridger': path.join(import.meta.dirname, './src/shared/utility-bridger'),
       },
     },
   }

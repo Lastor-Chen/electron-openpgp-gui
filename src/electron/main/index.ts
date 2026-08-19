@@ -1,5 +1,6 @@
 import path from 'node:path'
 
+import { forkChild } from '@utility-bridger/electron/main'
 import { app, BrowserWindow } from 'electron'
 
 function createWindow() {
@@ -17,5 +18,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  forkChild('apiAgent', path.join(import.meta.dirname, '../child/apiAgent/index.js'))
+
   createWindow()
 })

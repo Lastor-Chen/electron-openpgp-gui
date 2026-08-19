@@ -8,7 +8,7 @@ import { cyan } from './simpleColor.ts'
 interface CustomSpawnOptions extends SpawnOptions {
   /** @deprecated Use `onAbort: () => killElectron()` instead. */
   signal?: SpawnOptions['signal']
-  onAbort(this: AbortSignal, ev: Event): any
+  onAbort(this: AbortSignal, ev: Event): void
 }
 
 /**
