@@ -1,24 +1,34 @@
 import path from 'node:path'
 
 import { forkChild } from '@utility-bridger/electron/main'
-import { app, BrowserWindow } from 'electron'
+import { app, Menu } from 'electron'
 
-function createWindow() {
-  const win = new BrowserWindow({
-    webPreferences: {
-      preload: path.join(import.meta.dirname, '../preload/index.cjs'),
-    },
-  })
+import { openMainWindow } from '@/main/browsers'
 
-  if (import.meta.env.DEV) {
-    win.loadURL('http://localhost:5173/')
-  } else {
-    win.loadFile(path.join(import.meta.dirname, '../../../dist/index.html'))
-  }
+process.env.APP_ROOT = path.join(import.meta.dirname, '../../../')
+
+if (!app.requestSingleInstanceLock()) {
+  app.exit()
 }
 
-app.whenReady().then(() => {
-  forkChild('apiAgent', path.join(import.meta.dirname, '../child/apiAgent/index.js'))
+// mac 通常關視窗不等於關 app
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
 
-  createWindow()
+// mac Dock onClick app
+app.on('activate', () => {
+  openMainWindow()
+})
+
+app.whenReady().then(() => {
+  // remove default menu on mac
+  Menu.setApplicationMenu(Menu.buildFromTemplate([]))
+
+  forkChild(
+    'apiAgent',
+    path.join(process.env.APP_ROOT, 'dist-electron/electron/child/apiAgent/index.js'),
+  )
+
+  openMainWindow()
 })
