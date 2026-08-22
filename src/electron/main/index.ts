@@ -4,6 +4,7 @@ import { forkChild } from '@utility-bridger/electron/main'
 import { app, Menu } from 'electron'
 
 import { openMainWindow } from '@/main/browsers'
+import { setupIpcMain } from '@/main/ipc'
 
 process.env.APP_ROOT = path.join(import.meta.dirname, '../../../')
 
@@ -29,6 +30,8 @@ app.whenReady().then(() => {
     'apiAgent',
     path.join(process.env.APP_ROOT, 'dist-electron/electron/child/apiAgent/index.js'),
   )
+
+  setupIpcMain()
 
   openMainWindow()
 })

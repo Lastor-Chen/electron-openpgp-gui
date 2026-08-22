@@ -7,17 +7,30 @@ import HelloWorld from './components/HelloWorld.vue'
 
 const { apiAgent, onApiAgentCrash } = useApiAgent()
 
-const onClick = async () => {
+const pingMain = async () => {
+  const res = await window.ipcRenderer.invoke('ping', 'hello')
+  console.log(res)
+}
+
+const pingChild = async () => {
   await apiAgent.ping()
 }
 
 onMounted(() => {
-  const clear = onApiAgentCrash((err) => window.alert(`ApiAgent crashed: ${err}`))
-  onScopeDispose(() => clear())
+  const clearMainListener = window.ipcRenderer.on('someEvent', (a, b) =>
+    console.log('testEvent', { a, b }),
+  )
+  const clearChildListener = onApiAgentCrash((err) => window.alert(`ApiAgent crashed: ${err}`))
+
+  onScopeDispose(() => {
+    clearMainListener()
+    clearChildListener()
+  })
 })
 </script>
 
 <template>
-  <button @click="onClick">ping</button>
+  <button @click="pingMain">ping main</button>
+  <button @click="pingChild">ping child</button>
   <HelloWorld />
 </template>

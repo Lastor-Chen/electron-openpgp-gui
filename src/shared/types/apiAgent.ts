@@ -1,4 +1,4 @@
-export type ApiAgentCalls = {
+export type ApiAgentApis = {
   ping(): string
 }
 
