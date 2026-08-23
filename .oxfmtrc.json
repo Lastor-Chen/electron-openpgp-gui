@@ -3,5 +3,6 @@
   "singleQuote": true,
   "semi": false,
   "sortImports": true,
+  "endOfLine": "lf",
   "ignorePatterns": ["dist*/**"]
 }

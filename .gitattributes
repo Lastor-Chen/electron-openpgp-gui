@@ -1,0 +1,13 @@
+# auto formatter 設定 endOfLine 會撞上 os 差異問題
+# git 預設在 windows clone 下來時會轉成 CRLF, commit 時會統一成 LF
+# 設定 .gitattributes 讓 git 專案 local 統一為 LF, See more:
+# https://prettier.io/docs/options#end-of-line
+
+# 新增 .gitattributes 後需重新 git clone, 或是手動輸入
+# git add --renormalize .
+
+* text=auto eol=lf
+
+# windows specific files
+*.bat text eol=crlf
+*.cmd text eol=crlf
