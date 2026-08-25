@@ -3,8 +3,6 @@ import { onMounted, onScopeDispose } from 'vue'
 
 import { useApiAgent } from '@/composables/useChildIpc'
 
-import HelloWorld from './components/HelloWorld.vue'
-
 const { apiAgent, onApiAgentCrash } = useApiAgent()
 
 const pingMain = async () => {
@@ -32,5 +30,4 @@ onMounted(() => {
 <template>
   <button @click="pingMain">ping main</button>
   <button @click="pingChild">ping child</button>
-  <HelloWorld />
 </template>
