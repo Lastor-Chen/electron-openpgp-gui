@@ -4,12 +4,12 @@ import {
   addConsoleLogPrefix,
 } from '@utility-bridger/electron/child'
 
+import { pgpHandlers } from '@/child/apiAgent/pgp'
+
 handleUncaught()
 
 addConsoleLogPrefix('[ApiAgent]')
 
 bridgeRpcHandler({
-  ping() {
-    return 'pong'
-  },
+  ...pgpHandlers,
 })

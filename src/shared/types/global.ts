@@ -9,7 +9,9 @@ export interface AppInfo {
 }
 
 export type IpcMainApis = {
-  ping(msg: string): string
+  openFileBrowser(opts: {
+    properties: ('openDirectory' | 'openFile' | 'multiSelections')[]
+  }): { path: string; basename: string; dirname: string }[] | undefined
 }
 
 export type IpcMainEvents = {

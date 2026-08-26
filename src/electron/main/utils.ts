@@ -1,3 +1,4 @@
+import type { IpcMainEvents } from '@shared/types/global'
 import type { Event, Input, BrowserWindow } from 'electron'
 
 export function addDevToolsShortcut(event: Event, input: Input, browser: BrowserWindow) {
@@ -15,4 +16,12 @@ export function addDevToolsShortcut(event: Event, input: Input, browser: Browser
     event.preventDefault()
     browser.webContents.toggleDevTools()
   }
+}
+
+export function sendToWeb<K extends keyof IpcMainEvents>(
+  win: BrowserWindow,
+  channel: K,
+  ...args: Parameters<IpcMainEvents[K]>
+) {
+  win.webContents.send(channel, ...args)
 }

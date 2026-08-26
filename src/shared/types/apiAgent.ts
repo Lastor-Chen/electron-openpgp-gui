@@ -1,5 +1,10 @@
 export type ApiAgentApis = {
-  ping(): string
+  generateKey(opts: {
+    outputDir: string
+    name?: string
+    email?: string
+    comment?: string
+  }): Promise<void>
 }
 
 export type ApiAgentEvents = {}

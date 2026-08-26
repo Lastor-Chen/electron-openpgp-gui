@@ -1,20 +1,8 @@
-import type { IpcMainApis, IpcMainEvents } from '@shared/types/global'
-import { ipcMain } from 'electron'
-import type { BrowserWindow } from 'electron'
+import path from 'node:path'
 
-import { winMap } from '@/main/browsers'
+import type { IpcMainApis } from '@shared/types/global'
+import { ipcMain, dialog } from 'electron'
 
-export function setupIpcMain() {
-  ipcMainHandle('ping', (_, msg) => {
-    const mainWin = winMap.get('main')
-    if (mainWin) sendToWeb(mainWin, 'someEvent', '111', 222)
-
-    return `pong: ${msg}`
-  })
-}
-
-// helper functions
-// =====================
 function ipcMainHandle<K extends keyof IpcMainApis>(
   channel: K,
   cb: (
@@ -25,10 +13,17 @@ function ipcMainHandle<K extends keyof IpcMainApis>(
   ipcMain.handle(channel, cb)
 }
 
-function sendToWeb<K extends keyof IpcMainEvents>(
-  win: BrowserWindow,
-  channel: K,
-  ...args: Parameters<IpcMainEvents[K]>
-) {
-  win.webContents.send(channel, ...args)
+export function setupIpcMain() {
+  ipcMainHandle('openFileBrowser', async (_, opts) => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      properties: opts.properties,
+    })
+    if (canceled) return
+
+    return filePaths.map((filePath) => ({
+      path: filePath,
+      basename: path.basename(filePath),
+      dirname: path.dirname(filePath),
+    }))
+  })
 }
