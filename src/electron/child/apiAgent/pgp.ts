@@ -98,4 +98,47 @@ export const pgpHandlers: ApiAgentApis = {
       writable,
     )
   },
+  async decrypt(filePath: string, privKeyPath: string) {
+    const totalBytes = fs.statSync(filePath).size
+
+    // read file
+    const readable = fs.createReadStream(filePath)
+    const message = await openpgp.readMessage({ binaryMessage: stream.Readable.toWeb(readable) })
+
+    // 找私鑰
+    const armoredPrivKey = fs.readFileSync(privKeyPath, 'utf8')
+    const privKey = await openpgp.readPrivateKey({ armoredKey: armoredPrivKey })
+
+    // decrypt
+    const { data: decryptStream } = await openpgp.decrypt({
+      message,
+      decryptionKeys: [privKey],
+      format: 'binary',
+      config: {
+        allowUnauthenticatedStream: true,
+      },
+    })
+
+    // handle output
+    let output = path.basename(filePath, '.pgp')
+    output = path.basename(output, '.gpg')
+    output = path.join(path.dirname(filePath), output)
+    output = renameIfExisted(output)
+
+    const writable = fs.createWriteStream(output)
+
+    // progress bar
+    const progressStream = createProgressStream(totalBytes, {
+      onTransform(percent) {
+        console.log(`${percent}%`, totalBytes)
+        trigger('progress', percent)
+      },
+    })
+
+    await stream.promises.pipeline(
+      decryptStream,
+      stream.Transform.fromWeb(progressStream),
+      writable,
+    )
+  },
 }

@@ -49,8 +49,32 @@ const encrypt = async () => {
   await apiAgent.encrypt(filePaths, pubkeyPaths)
 
   clear()
-
   window.alert('Encryption successful')
+}
+
+const decrypt = async () => {
+  const files = await window.ipcRenderer.invoke('openFileBrowser', {
+    properties: ['openFile'],
+    filters: [{ name: 'PGP Files', extensions: ['pgp', 'gpg'] }],
+  })
+  if (!files) return
+
+  const privKeys = await window.ipcRenderer.invoke('openFileBrowser', {
+    properties: ['openFile'],
+    filters: [{ name: 'PGP keys', extensions: ['asc'] }],
+  })
+  if (!privKeys) return
+
+  const filePaths = files.map((file) => file.path)
+  const privKeyPaths = privKeys.map((key) => key.path)
+
+  progress.value = 0
+  const clear = onApiAgent('progress', (percent) => (progress.value = percent))
+
+  await apiAgent.decrypt(filePaths[0], privKeyPaths[0])
+
+  clear()
+  window.alert('Decryption successful')
 }
 
 onMounted(() => {
@@ -76,6 +100,9 @@ onMounted(() => {
 
   <div style="margin-top: 8px">
     <button @click="encrypt">Encrypt</button>
-    <span style="margin-left: 4px">{{ progress }}%</span>
   </div>
+  <div style="margin-top: 8px">
+    <button @click="decrypt">Decrypt</button>
+  </div>
+  <div style="margin-top: 8px">{{ progress }}%</div>
 </template>
