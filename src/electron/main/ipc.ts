@@ -15,9 +15,7 @@ function ipcMainHandle<K extends keyof IpcMainApis>(
 
 export function setupIpcMain() {
   ipcMainHandle('openFileBrowser', async (_, opts) => {
-    const { canceled, filePaths } = await dialog.showOpenDialog({
-      properties: opts.properties,
-    })
+    const { canceled, filePaths } = await dialog.showOpenDialog(opts)
     if (canceled) return
 
     return filePaths.map((filePath) => ({

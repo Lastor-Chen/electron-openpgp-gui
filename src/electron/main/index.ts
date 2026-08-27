@@ -23,8 +23,15 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(() => {
-  // remove default menu on mac
-  Menu.setApplicationMenu(Menu.buildFromTemplate([]))
+  // reset mac app menu to remove viewMenu
+  Menu.setApplicationMenu(
+    Menu.buildFromTemplate([
+      { role: 'appMenu' },
+      { role: 'fileMenu' },
+      { role: 'editMenu' },
+      { role: 'windowMenu' },
+    ]),
+  )
 
   forkChild(
     'apiAgent',

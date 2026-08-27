@@ -5,6 +5,9 @@ export type ApiAgentApis = {
     email?: string
     comment?: string
   }): Promise<void>
+  encrypt(filePaths: string[], pubkeyPaths: string[]): void
 }
 
-export type ApiAgentEvents = {}
+export type ApiAgentEvents = {
+  progress(percent: number): void
+}

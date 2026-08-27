@@ -10,7 +10,8 @@ export interface AppInfo {
 
 export type IpcMainApis = {
   openFileBrowser(opts: {
-    properties: ('openDirectory' | 'openFile' | 'multiSelections')[]
+    properties?: ('openDirectory' | 'openFile' | 'multiSelections')[]
+    filters?: { name: string; extensions: string[] }[]
   }): { path: string; basename: string; dirname: string }[] | undefined
 }
 
