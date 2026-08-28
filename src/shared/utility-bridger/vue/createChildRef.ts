@@ -1,7 +1,7 @@
 import type { ApiCalls, ApiEvents, ChildName } from '@utility-bridger/types'
 import { wrapRpcChild } from '@utility-bridger/vue/wrapRpcChild'
-import { computed, shallowRef } from 'vue'
-import type { ComputedRef } from 'vue'
+import { onScopeDispose, shallowRef } from 'vue'
+import type { ShallowRef } from 'vue'
 
 /**
  * 建立子程序 trigger 自動更新的 ref。
@@ -11,10 +11,10 @@ import type { ComputedRef } from 'vue'
  * const childRef = createChildRef<ChildCalls, ChildEvents>('myChild')
  *
  * // Only update when child trigger
- * const countState = childARef('updateCount')
+ * const countState = childRef('updateCount')
  *
- * // Call API when create with default value
- * const countState = childARef('updateCount', { initCall: 'getCount', initValue: 0 })
+ * // Call API when create with initial value
+ * const countState = childRef('updateCount', { initCall: 'getCount', initValue: 0 })
  */
 export function createChildRef<C extends ApiCalls, E extends ApiEvents>(childName: ChildName) {
   return function childRef<
@@ -27,15 +27,16 @@ export function createChildRef<C extends ApiCalls, E extends ApiEvents>(childNam
       initCall?: CKey
       initValue?: InitV
     },
-  ): ComputedRef<
+  ): ShallowRef<
     InitV extends undefined ? Parameters<E[EKey]>[0] | undefined : Parameters<E[EKey]>[0]
   > {
-    const [child, onChild] = wrapRpcChild<C, E>(childName)
+    const child = wrapRpcChild<C, E>(childName)
     const state = shallowRef(options?.initValue)
 
-    onChild(event, (...args) => {
+    const clear = child.on(event, (...args) => {
       state.value = args[0]
     })
+    onScopeDispose(() => clear())
 
     if (options?.initCall) {
       child[options.initCall]()
@@ -47,6 +48,6 @@ export function createChildRef<C extends ApiCalls, E extends ApiEvents>(childNam
         })
     }
 
-    return computed(() => state.value)
+    return state
   }
 }

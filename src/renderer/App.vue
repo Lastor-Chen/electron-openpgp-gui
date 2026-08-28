@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { onMounted, onScopeDispose, ref } from 'vue'
 
-import { useApiAgent } from '@/composables/useChildIpc'
-
-const { apiAgent, onApiAgent, onApiAgentCrash } = useApiAgent()
+import { apiAgentRef } from '@/composables/useChildRef'
+import { apiAgent } from '@/rpcChild'
 
 const name = ref('')
 const email = ref('')
@@ -25,7 +24,7 @@ const genKey = async () => {
   window.alert('Key pair generated')
 }
 
-const progress = ref(0)
+const progress = apiAgentRef('progress', { initValue: 0 })
 
 const encrypt = async () => {
   const files = await window.ipcRenderer.invoke('openFileBrowser', {
@@ -44,11 +43,8 @@ const encrypt = async () => {
   const pubkeyPaths = pubKeys.map((pubkey) => pubkey.path)
 
   progress.value = 0
-  const clear = onApiAgent('progress', (percent) => (progress.value = percent))
-
   await apiAgent.encrypt(filePaths, pubkeyPaths)
 
-  clear()
   window.alert('Encryption successful')
 }
 
@@ -69,11 +65,8 @@ const decrypt = async () => {
   const privKeyPaths = privKeys.map((key) => key.path)
 
   progress.value = 0
-  const clear = onApiAgent('progress', (percent) => (progress.value = percent))
-
   await apiAgent.decrypt(filePaths[0], privKeyPaths[0])
 
-  clear()
   window.alert('Decryption successful')
 }
 
@@ -81,7 +74,7 @@ onMounted(() => {
   const clearMainListener = window.ipcRenderer.on('someEvent', (a, b) =>
     console.log('testEvent', { a, b }),
   )
-  const clearChildListener = onApiAgentCrash((err) => window.alert(`ApiAgent crashed: ${err}`))
+  const clearChildListener = apiAgent.onCrash((err) => window.alert(`ApiAgent crashed: ${err}`))
 
   onScopeDispose(() => {
     clearMainListener()

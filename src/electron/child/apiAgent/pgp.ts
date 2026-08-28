@@ -130,7 +130,6 @@ export const pgpHandlers: ApiAgentApis = {
     // progress bar
     const progressStream = createProgressStream(totalBytes, {
       onTransform(percent) {
-        console.log(`${percent}%`, totalBytes)
         trigger('progress', percent)
       },
     })

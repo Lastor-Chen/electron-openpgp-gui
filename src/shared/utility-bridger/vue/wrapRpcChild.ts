@@ -11,7 +11,7 @@ function devLog(type: 'log' | 'warn' | 'error', ...msgs: unknown[]) {
 
 /**
  * @example
- * const [myChild, onMyChild, onMyChildCrash] = wrapRpcChild<ChildCalls, ChildEvents>('myChild')
+ * const myChild = wrapRpcChild<ChildCalls, ChildEvents>('myChild')
  *
  * // invoke child API
  * try {
@@ -22,19 +22,43 @@ function devLog(type: 'log' | 'warn' | 'error', ...msgs: unknown[]) {
  *
  * // listen child trigger event
  * const state = ref()
- * const removeListener = onMyChild('myEvent', (val) => {
- *   state.value = val
- * })
+ * const removeListener = myChild.on('myEvent', (val) => { state.value = val })
+ * removeListener()
  *
  * // listen child crash
- * onMyChildCrash(() => {
- *   window.alert('myChild process is crashed!!')
- * })
+ * myChild.onCrash(() => { window.alert('myChild process is crashed!!') })
  */
 export function wrapRpcChild<C extends ApiCalls, E extends ApiEvents>(childName: ChildName) {
-  // 包成 proxy.apiKey() 的呼叫格式
-  const proxy = new Proxy({} as WrappedCalls<C>, {
-    get(_target, key: string) {
+  const methods = {
+    /**
+     * Return a remove listener function.
+     * @example
+     * const myChild = wrapRpcChild<ChildCalls, ChildEvents>('myChild')
+     * const removerListener = myChild.on('myEvent', () => {})
+     * removerListener()
+     */
+    on<K extends keyof E>(
+      event: Extract<K, string>,
+      listener: (...args: Parameters<E[K]>) => void,
+    ) {
+      return window.rpcChild.on(childName, event, listener)
+    },
+    onCrash(listener: (error: Error) => void) {
+      return window.rpcChild.onCrash(childName, (errorLike) => {
+        const error = new Error(errorLike.message)
+        error.stack = errorLike.stack
+        listener(error)
+      })
+    },
+  }
+
+  // 包成 proxy.keyName(...args) 的呼叫格式
+  return new Proxy(methods as WrappedCalls<C> & typeof methods, {
+    get(target, key: string, receiver) {
+      if (Reflect.has(target, key)) {
+        return Reflect.get(target, key, receiver)
+      }
+
       return function (...args: any[]): Promise<any> {
         devLog('log', `[${childName}] Call ${String(key)}:`, args)
 
@@ -56,30 +80,4 @@ export function wrapRpcChild<C extends ApiCalls, E extends ApiEvents>(childName:
       }
     },
   })
-
-  /**
-   * Return a remove listener function.
-   * @example
-   * const [, onChild] = wrapRpcChild<ChildCalls, ChildEvents>('myChild')
-   * const removerListener = onChild('myEvent', () => {
-   *   // ...
-   * })
-   * removerListener()
-   */
-  const onTriggerMessage = <K extends keyof E>(
-    event: Extract<K, string>,
-    listener: (...args: Parameters<E[K]>) => void,
-  ) => {
-    return window.rpcChild.on(childName, event, listener)
-  }
-
-  const onCrash = (listener: (error: Error) => void) => {
-    return window.rpcChild.onCrash(childName, (errorLike) => {
-      const error = new Error(errorLike.message)
-      error.stack = errorLike.stack
-      listener(error)
-    })
-  }
-
-  return [proxy, onTriggerMessage, onCrash] as const
 }
