@@ -3,7 +3,7 @@ import type { ApiCalls, ApiEvents, ChildName, WrappedCalls } from '@utility-brid
 // setup dev logger
 window.allowDevLog = import.meta.env.DEV
 
-function logIpcChild(type: 'log' | 'warn' | 'error', ...msgs: unknown[]) {
+function devLog(type: 'log' | 'warn' | 'error', ...msgs: unknown[]) {
   if (!window.allowDevLog) return
 
   console[type](...msgs)
@@ -11,7 +11,7 @@ function logIpcChild(type: 'log' | 'warn' | 'error', ...msgs: unknown[]) {
 
 /**
  * @example
- * const [myChild, onMyChild, onMyChildCrash] = wrapIpcChild<ChildCalls, ChildEvents>('myChild')
+ * const [myChild, onMyChild, onMyChildCrash] = wrapRpcChild<ChildCalls, ChildEvents>('myChild')
  *
  * // invoke child API
  * try {
@@ -31,25 +31,25 @@ function logIpcChild(type: 'log' | 'warn' | 'error', ...msgs: unknown[]) {
  *   window.alert('myChild process is crashed!!')
  * })
  */
-export function wrapIpcChild<C extends ApiCalls, E extends ApiEvents>(childName: ChildName) {
+export function wrapRpcChild<C extends ApiCalls, E extends ApiEvents>(childName: ChildName) {
   // 包成 proxy.apiKey() 的呼叫格式
-  const proxyPostMessage = new Proxy({} as WrappedCalls<C>, {
+  const proxy = new Proxy({} as WrappedCalls<C>, {
     get(_target, key: string) {
       return function (...args: any[]): Promise<any> {
-        logIpcChild('log', `[${childName}] Call ${String(key)}:`, args)
+        devLog('log', `[${childName}] Call ${String(key)}:`, args)
 
-        return window.ipcChild
-          .postMessage(childName, key, ...args)
+        return window.rpcChild
+          .invoke(childName, key, ...args)
           .then(({ error: errorLike, result }) => {
             // IPC 傳 Error 會遺失原始 stack, 主程序先轉成 error-like 最後再轉回 Error
             if (errorLike) {
-              logIpcChild('error', `[${childName}] Response ${String(key)}`, errorLike.stack)
+              devLog('error', `[${childName}] Response ${String(key)}`, errorLike.stack)
 
               const transError = new Error(errorLike.message)
               transError.stack = errorLike.stack
               throw transError
             }
-            logIpcChild('log', `[${childName}] Response ${String(key)}:`, result)
+            devLog('log', `[${childName}] Response ${String(key)}:`, result)
 
             return result
           })
@@ -60,7 +60,7 @@ export function wrapIpcChild<C extends ApiCalls, E extends ApiEvents>(childName:
   /**
    * Return a remove listener function.
    * @example
-   * const [, onChild] = wrapIpcChild<ChildCalls, ChildEvents>('myChild')
+   * const [, onChild] = wrapRpcChild<ChildCalls, ChildEvents>('myChild')
    * const removerListener = onChild('myEvent', () => {
    *   // ...
    * })
@@ -70,16 +70,16 @@ export function wrapIpcChild<C extends ApiCalls, E extends ApiEvents>(childName:
     event: Extract<K, string>,
     listener: (...args: Parameters<E[K]>) => void,
   ) => {
-    return window.ipcChild.on(childName, event, listener)
+    return window.rpcChild.on(childName, event, listener)
   }
 
   const onCrash = (listener: (error: Error) => void) => {
-    return window.ipcChild.onCrash(childName, (errorLike) => {
+    return window.rpcChild.onCrash(childName, (errorLike) => {
       const error = new Error(errorLike.message)
       error.stack = errorLike.stack
       listener(error)
     })
   }
 
-  return [proxyPostMessage, onTriggerMessage, onCrash] as const
+  return [proxy, onTriggerMessage, onCrash] as const
 }

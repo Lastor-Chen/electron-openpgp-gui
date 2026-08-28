@@ -1,2 +1,2 @@
-export * from './wrapIpcChild'
+export * from './wrapRpcChild'
 export * from './createChildRef'

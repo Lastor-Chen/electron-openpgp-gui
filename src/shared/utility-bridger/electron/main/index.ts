@@ -1,7 +1,7 @@
 import {
   invokeChildApi,
-  assignMessageHandler,
-  wrapIpcChild,
+  extendMessageEvents,
+  wrapToChildIpc,
 } from '@utility-bridger/electron/sharedUtils'
 import type {
   ChildName,
@@ -66,7 +66,7 @@ export function forkChild<C extends ApiCalls, E extends ApiEvents>(
   options?: Electron.ForkOptions,
 ) {
   const child = utilityProcess.fork(modulePath, argv, options)
-  const extendedChild = assignMessageHandler(child)
+  const extendedChild = extendMessageEvents(child)
   childMap.set(name, extendedChild)
 
   //#region lifecycle 監聽
@@ -116,10 +116,10 @@ export function forkChild<C extends ApiCalls, E extends ApiEvents>(
     })
   })
 
-  const ipcChild = wrapIpcChild<C, E>(extendedChild, name)
+  const ipcWrapper = wrapToChildIpc<C, E>(extendedChild, name)
 
   return {
     process: extendedChild,
-    ...ipcChild,
+    ...ipcWrapper,
   }
 }

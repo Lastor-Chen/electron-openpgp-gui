@@ -49,7 +49,7 @@ export interface ChildExtendedEvent {
   postMsg(msgEvent: string, ...args: any[]): void
 }
 
-export type IpcChild<C extends ApiCalls, E extends ApiEvents> = {
+export type ToChildIpc<C extends ApiCalls, E extends ApiEvents> = {
   invoke<K extends keyof C>(
     key: Extract<K, string>,
     ...args: Parameters<C[K]>
@@ -69,8 +69,8 @@ export type IpcChild<C extends ApiCalls, E extends ApiEvents> = {
   removeAllListeners<K extends keyof E>(event: Extract<K, string>): void
 }
 
-export type WindowIpcChild = {
-  postMessage(name: ChildName, key: string, ...args: any[]): ApiResult<unknown, ErrorLike>
+export type WindowRpcChild = {
+  invoke(name: ChildName, key: string, ...args: any[]): ApiResult<unknown, ErrorLike>
   on(name: ChildName, event: string, listener: (...args: any[]) => void): RemoveListener
   onCrash(name: ChildName, listener: (error: ErrorLike) => void): RemoveListener
 }

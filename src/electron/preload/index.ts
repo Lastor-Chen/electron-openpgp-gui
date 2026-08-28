@@ -1,9 +1,9 @@
 import type { AppInfo } from '@shared/types/global'
-import { bridgeIpcChild } from '@utility-bridger/electron/preload'
+import { bridgeRpcChild } from '@utility-bridger/electron/preload'
 import { contextBridge, ipcRenderer } from 'electron'
 import type { IpcRendererEvent } from 'electron'
 
-bridgeIpcChild()
+bridgeRpcChild()
 
 contextBridge.exposeInMainWorld('appInfo', {
   version: import.meta.env.VITE_APP_VERSION,

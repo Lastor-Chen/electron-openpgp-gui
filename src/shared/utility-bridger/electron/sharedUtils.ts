@@ -5,7 +5,7 @@ import type {
   ApiCalls,
   ApiEvents,
   ChildName,
-  IpcChild,
+  ToChildIpc,
 } from '@utility-bridger/types'
 
 // 產生與子程序 two-way 通訊的識別用 id, 確保子程序回應能回對的地方
@@ -84,7 +84,7 @@ export function invokeChildApi(options: {
  * child.postMsg('event_name', ...args)
  * child.on('event_name', (...args) => {})
  */
-export function assignMessageHandler<P extends Electron.UtilityProcess | Electron.ParentPort>(
+export function extendMessageEvents<P extends Electron.UtilityProcess | Electron.ParentPort>(
   endpoint: P,
 ) {
   if (!endpoint || !endpoint['postMessage'])
@@ -123,10 +123,10 @@ export function assignMessageHandler<P extends Electron.UtilityProcess | Electro
 /**
  * 包裝出支援 type 自動推斷的子程序高階 IPC channel.
  */
-export function wrapIpcChild<C extends ApiCalls, E extends ApiEvents>(
+export function wrapToChildIpc<C extends ApiCalls, E extends ApiEvents>(
   endpoint: (Electron.UtilityProcess | Electron.ParentPort) & ChildExtendedEvent,
   childName: ChildName,
-): IpcChild<C, E> {
+): ToChildIpc<C, E> {
   return {
     /** 呼叫 child 定義好的 APIs。 */
     invoke(key, ...args) {

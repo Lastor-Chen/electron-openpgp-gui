@@ -1,6 +1,6 @@
-import { assignMessageHandler } from '@utility-bridger/electron/sharedUtils'
+import { extendMessageEvents } from '@utility-bridger/electron/sharedUtils'
 
-export const parentPort = assignMessageHandler(process.parentPort)
+export const parentPort = extendMessageEvents(process.parentPort)
 
 export function handleUncaught() {
   process.on('unhandledRejection', (reason) => {

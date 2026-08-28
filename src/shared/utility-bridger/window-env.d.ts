@@ -1,8 +1,8 @@
-import type { WindowIpcChild } from '@utility-bridger/types'
+import type { WindowRpcChild } from '@utility-bridger/types'
 
 declare global {
   interface Window {
-    ipcChild: WindowIpcChild
+    rpcChild: WindowRpcChild
     allowDevLog: boolean
   }
 }

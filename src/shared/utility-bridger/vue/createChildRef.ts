@@ -1,5 +1,5 @@
 import type { ApiCalls, ApiEvents, ChildName } from '@utility-bridger/types'
-import { wrapIpcChild } from '@utility-bridger/vue/wrapIpcChild'
+import { wrapRpcChild } from '@utility-bridger/vue/wrapRpcChild'
 import { computed, shallowRef } from 'vue'
 import type { ComputedRef } from 'vue'
 
@@ -30,7 +30,7 @@ export function createChildRef<C extends ApiCalls, E extends ApiEvents>(childNam
   ): ComputedRef<
     InitV extends undefined ? Parameters<E[EKey]>[0] | undefined : Parameters<E[EKey]>[0]
   > {
-    const [child, onChild] = wrapIpcChild<C, E>(childName)
+    const [child, onChild] = wrapRpcChild<C, E>(childName)
     const state = shallowRef(options?.initValue)
 
     onChild(event, (...args) => {

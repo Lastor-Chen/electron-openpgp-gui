@@ -1,5 +1,5 @@
 import { parentPort } from '@utility-bridger/electron/child/utils'
-import { wrapIpcChild } from '@utility-bridger/electron/sharedUtils'
+import { wrapToChildIpc } from '@utility-bridger/electron/sharedUtils'
 import type {
   ChildCallMessage,
   ChildResponseMessage,
@@ -41,19 +41,19 @@ export function bridgeRpcHandler(exposedApi: ApiCalls) {
 /**
  * 建立與其他子程序通訊的接口。
  * @example
- * const ipcMyChild = createIpcChild<ChildCalls, ChildEvents>('myChild')
+ * const rpcMyChild = createRpcChild<ChildCalls, ChildEvents>('myChild')
  *
  * // Invoke APIs
- * const { result, error } = await ipcMyChild.invoke('api_key', 'arg1', 'arg2')
+ * const { result, error } = await rpcMyChild.invoke('api_key', 'arg1', 'arg2')
  *
  * // Listen trigger event
  * const listener = (val) => {}
- * ipcMyChild.on('myEvent', listener)
- * ipcMyChild.removeListener('myEvent', listener)
- * ipcMyChild.removeAllListeners('myEvent')
+ * rpcMyChild.on('myEvent', listener)
+ * rpcMyChild.removeListener('myEvent', listener)
+ * rpcMyChild.removeAllListeners('myEvent')
  */
-export function createIpcChild<C extends ApiCalls, E extends ApiEvents>(childName: ChildName) {
-  return wrapIpcChild<C, E>(parentPort, childName)
+export function createRpcChild<C extends ApiCalls, E extends ApiEvents>(childName: ChildName) {
+  return wrapToChildIpc<C, E>(parentPort, childName)
 }
 
 /**

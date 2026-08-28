@@ -94,7 +94,7 @@ onMounted(() => {
   <div>
     <input v-model="name" type="text" placeholder="name" />
     <input v-model="email" type="text" placeholder="email" />
-    <input v-mode="comment" type="text" placeholder="comment" />
+    <input v-model="comment" type="text" placeholder="comment" />
     <button @click="genKey">Generate Key</button>
   </div>
 

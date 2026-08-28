@@ -1,7 +1,7 @@
 import type { ApiAgentApis, ApiAgentEvents } from '@shared/types/apiAgent'
-import { wrapIpcChild } from '@utility-bridger/vue'
+import { wrapRpcChild } from '@utility-bridger/vue'
 
-const [apiAgent, onApiAgent, onApiAgentCrash] = wrapIpcChild<ApiAgentApis, ApiAgentEvents>(
+const [apiAgent, onApiAgent, onApiAgentCrash] = wrapRpcChild<ApiAgentApis, ApiAgentEvents>(
   'apiAgent',
 )
 
