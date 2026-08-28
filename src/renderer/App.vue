@@ -91,11 +91,11 @@ onMounted(() => {
     <button @click="genKey">Generate Key</button>
   </div>
 
-  <div style="margin-top: 8px">
+  <div class="mt-2">
     <button @click="encrypt">Encrypt</button>
   </div>
-  <div style="margin-top: 8px">
+  <div class="mt-2">
     <button @click="decrypt">Decrypt</button>
   </div>
-  <div style="margin-top: 8px">{{ progress }}%</div>
+  <div class="mt-2">{{ progress }}%</div>
 </template>

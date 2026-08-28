@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@openpgp/web-stream-tools": "^0.3.1",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/archiver": "^8.0.0",
     "@types/node": "^24.13.3",
     "@vitejs/plugin-vue": "^6.0.8",
@@ -31,6 +32,7 @@
     "electron-builder": "^26.15.3",
     "oxfmt": "^0.63.0",
     "oxlint": "^1.78.0",
+    "tailwindcss": "^4.3.3",
     "tsdown": "^0.22.14",
     "typescript": "~6.0.2",
     "vite": "^8.2.0",

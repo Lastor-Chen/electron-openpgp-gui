@@ -1,5 +1,6 @@
 import path from 'node:path'
 
+import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import type { InlineConfig } from 'tsdown'
 import { defineConfig } from 'vite'
@@ -27,6 +28,7 @@ export default defineConfig(({ command }) => {
     clearScreen: false,
     plugins: [
       vue(),
+      tailwindcss(),
       tsdownPlugin({
         viteWatch: ['src/electron/**', 'src/shared/**'],
         onAllSuccess: isDev ? () => spawnElectron() : undefined,
