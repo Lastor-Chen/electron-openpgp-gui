@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onScopeDispose, ref } from 'vue'
 
+import { Button } from '@/components/ui/button'
 import { apiAgentRef } from '@/composables/useChildRef'
 import { apiAgent } from '@/rpcChild'
 
@@ -88,14 +89,14 @@ onMounted(() => {
     <input v-model="name" type="text" placeholder="name" />
     <input v-model="email" type="text" placeholder="email" />
     <input v-model="comment" type="text" placeholder="comment" />
-    <button @click="genKey">Generate Key</button>
+    <Button variant="default" @click="genKey">Generate Key</Button>
   </div>
 
   <div class="mt-2">
-    <button @click="encrypt">Encrypt</button>
+    <Button @click="encrypt">Encrypt</Button>
   </div>
   <div class="mt-2">
-    <button @click="decrypt">Decrypt</button>
+    <Button @click="decrypt">Decrypt</Button>
   </div>
   <div class="mt-2">{{ progress }}%</div>
 </template>
