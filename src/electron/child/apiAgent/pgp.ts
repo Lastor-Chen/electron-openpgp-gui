@@ -7,11 +7,37 @@ import { createTrigger } from '@shared/utility-bridger/electron/child'
 import { ZipArchive } from 'archiver'
 import * as openpgp from 'openpgp'
 
+import { initDb, migrateDb } from '@/child/apiAgent/sqlite'
+import type { OrmClient } from '@/child/apiAgent/sqlite'
 import { createProgressStream, renameIfExisted } from '@/child/apiAgent/utils'
 
 const trigger = createTrigger<ApiAgentEvents>()
 
+const dbDirArg = process.argv.find((val) => val.startsWith('--db-dir'))
+const dbDir = dbDirArg?.split('=')[1]
+const dbPath = dbDir ? path.join(dbDir, 'pgp_data') : undefined
+let db: OrmClient | undefined
+
 export const pgpHandlers: ApiAgentApis = {
+  async initDb() {
+    if (db) return dbPath // 確保只執行 1 次
+
+    if (!dbPath) throw new Error('NO_DB_DIR')
+    db = await initDb(dbPath)
+
+    await migrateDb(db.orm)
+
+    return dbPath
+  },
+  async resetDb() {
+    if (!db || !dbPath) return
+
+    await db.orm.close(true)
+    fs.rmSync(dbPath, { force: true })
+
+    db = await initDb(dbPath)
+    await db.orm.migrator.up()
+  },
   async generateKey(opts) {
     const { outputDir, name, email, comment } = opts || {}
     const day = 365

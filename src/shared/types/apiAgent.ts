@@ -1,4 +1,6 @@
 export type ApiAgentApis = {
+  initDb(): Promise<string | undefined>
+  resetDb(): Promise<void>
   generateKey(opts: {
     outputDir: string
     name?: string

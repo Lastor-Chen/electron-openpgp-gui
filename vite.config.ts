@@ -34,7 +34,8 @@ export default defineConfig(({ command }) => {
           {
             ...baseTsdownConfig,
             entry: [
-              'src/electron/child/*/index.ts', //
+              'src/electron/child/*/index.ts',
+              'src/electron/child/apiAgent/sqlite/migrations/*.ts',
               'src/electron/main/index.ts',
             ],
             outDir: 'dist-electron',
