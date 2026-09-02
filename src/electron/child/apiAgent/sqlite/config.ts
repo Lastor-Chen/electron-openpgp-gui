@@ -4,7 +4,7 @@ import path from 'node:path'
 import { Migrator } from '@mikro-orm/migrations'
 import { defineConfig, SqliteDriver, NodeSqliteDialect } from '@mikro-orm/sql'
 
-import { Migration20260902070724 } from './migrations/Migration20260902070724'
+import { Migration20260902090238 } from './migrations/Migration20260902090238'
 import { PgpKey } from './schemas/pgpKey'
 
 const migrationFiles = fs.globSync('migrations/*.{js,ts}', { cwd: import.meta.dirname })
@@ -25,7 +25,7 @@ export function baseConfig(dbPath: string) {
       tableName: 'schema_migrations',
       path: path.join(import.meta.dirname, './migrations'),
       migrationsList: [
-        Migration20260902070724,
+        Migration20260902090238,
         // oxlint-disable-next-line unicorn/no-array-sort
       ].sort((a, b) => a.name.localeCompare(b.name)),
     },

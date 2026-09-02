@@ -7,12 +7,12 @@ export const PgpKey = defineEntity({
   properties: {
     key_id: p.text().primary(),
     is_owner: p.boolean(),
-    name: p.text(),
-    email: p.text(),
+    name: p.text().nullable(),
+    email: p.text().nullable(),
     encryption_key_id: p.text().unique(),
     fingerprint: p.text().unique(),
     creation_time: p.date(), // 不是 row 的 timestamp
-    expiration_time: p.date(), // 不是 row 的 timestamp
+    expiration_time: p.date().nullable(), // 不是 row 的 timestamp
     public_key: p.text(),
     private_key: p.text().nullable(),
     revocation_cert: p.text().nullable(),

@@ -4,21 +4,13 @@ import { onMounted, onScopeDispose, ref } from 'vue'
 import { apiAgentRef } from '@/composables/useChildRef'
 import { apiAgent } from '@/rpcChild'
 
-const name = ref('')
-const email = ref('')
-const comment = ref('')
+const name = ref<string>()
+const email = ref<string>()
 
 const genKey = async () => {
-  const dir = await window.ipcRenderer.invoke('openFileBrowser', {
-    properties: ['openDirectory'],
-  })
-  if (!dir) return
-
   await apiAgent.generateKey({
-    outputDir: dir[0].path,
-    name: name.value,
-    email: email.value,
-    comment: comment.value,
+    name: name.value || undefined,
+    email: email.value || undefined,
   })
 
   window.alert('Key pair generated')
@@ -87,7 +79,6 @@ onMounted(() => {
   <div>
     <input v-model="name" type="text" placeholder="name" />
     <input v-model="email" type="text" placeholder="email" />
-    <input v-model="comment" type="text" placeholder="comment" />
     <button @click="genKey">Generate Key</button>
   </div>
 
