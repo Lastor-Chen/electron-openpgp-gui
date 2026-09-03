@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations'
 
-import { getAppId } from '../appIdUtils'
+import { getAppId } from '../appIdUtils.ts'
 
 export class Migration20260902090238 extends Migration {
   override name = 'Migration20260902090238'
