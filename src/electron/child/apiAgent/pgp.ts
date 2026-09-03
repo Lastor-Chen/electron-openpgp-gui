@@ -155,7 +155,9 @@ export const pgpHandlers: ApiAgentApis = {
       writable,
     )
   },
-  async decrypt(filePath: string, privKeyPath: string) {
+  async decrypt(filePath: string) {
+    if (!db) throw new Error('DB_NOT_READY')
+
     const totalBytes = fs.statSync(filePath).size
 
     // read file
@@ -163,13 +165,26 @@ export const pgpHandlers: ApiAgentApis = {
     const message = await openpgp.readMessage({ binaryMessage: stream.Readable.toWeb(readable) })
 
     // 找私鑰
-    const armoredPrivKey = fs.readFileSync(privKeyPath, 'utf8')
-    const privKey = await openpgp.readPrivateKey({ armoredKey: armoredPrivKey })
+    const encKeyIds = message.getEncryptionKeyIDs().map((keyId) => keyId.toHex())
+    const em = db.em.fork()
+    const privKeyRows = await em.find(
+      db.PgpKey,
+      { encryption_key_id: { $in: encKeyIds } },
+      { fields: ['private_key'] },
+    )
+
+    const privKeys = await Promise.all(
+      privKeyRows.flatMap((row) => {
+        if (!row.private_key) return []
+
+        return openpgp.readPrivateKey({ armoredKey: row.private_key })
+      }),
+    )
 
     // decrypt
     const { data: decryptStream } = await openpgp.decrypt({
       message,
-      decryptionKeys: [privKey],
+      decryptionKeys: privKeys,
       format: 'binary',
       config: {
         allowUnauthenticatedStream: true,

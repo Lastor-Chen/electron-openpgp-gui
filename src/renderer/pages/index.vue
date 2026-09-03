@@ -47,17 +47,10 @@ const decrypt = async () => {
   })
   if (!files) return
 
-  const privKeys = await window.ipcRenderer.invoke('openFileBrowser', {
-    properties: ['openFile'],
-    filters: [{ name: 'PGP keys', extensions: ['asc'] }],
-  })
-  if (!privKeys) return
-
   const filePaths = files.map((file) => file.path)
-  const privKeyPaths = privKeys.map((key) => key.path)
 
   progress.value = 0
-  await apiAgent.decrypt(filePaths[0], privKeyPaths[0])
+  await apiAgent.decrypt(filePaths[0])
 
   window.alert('Decryption successful')
 }

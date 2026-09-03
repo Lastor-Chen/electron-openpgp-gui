@@ -4,7 +4,7 @@ export type ApiAgentApis = {
   generateKey(opts: { name?: string; email?: string }): Promise<void>
   getPgpKeys(): Promise<{ key_id: string; name?: string | null; email?: string | null }[]>
   encrypt(filePaths: string[], pubkeyIds: string[]): void
-  decrypt(filePath: string, privKeyPath: string): void
+  decrypt(filePath: string): void
 }
 
 export type ApiAgentEvents = {
