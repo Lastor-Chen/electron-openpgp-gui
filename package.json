@@ -20,9 +20,11 @@
     "@mikro-orm/core": "^7.1.14",
     "@mikro-orm/migrations": "^7.1.14",
     "@mikro-orm/sql": "^7.1.14",
+    "@vueuse/core": "^14.4.0",
     "archiver": "^8.0.0",
     "openpgp": "^6.3.1",
-    "vue": "^3.5.40"
+    "vue": "^3.5.40",
+    "vue-router": "^5.3.0"
   },
   "devDependencies": {
     "@mikro-orm/cli": "^7.1.14",
