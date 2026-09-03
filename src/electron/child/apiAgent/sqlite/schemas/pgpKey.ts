@@ -1,7 +1,7 @@
 import { defineEntity, p } from '@mikro-orm/core'
 import type { InferEntity } from '@mikro-orm/core'
 
-export const PgpKey = defineEntity({
+export const PgpKeySchema = defineEntity({
   name: 'PgpKey',
   tableName: 'pgp_key',
   properties: {
@@ -19,4 +19,4 @@ export const PgpKey = defineEntity({
   },
 })
 
-export type PgpKeyEntity = InferEntity<typeof PgpKey>
+export type PgpKeyEntity = InferEntity<typeof PgpKeySchema>

@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import stream from 'node:stream'
 
-import { wrap } from '@mikro-orm/core'
+import { serialize } from '@mikro-orm/core'
 import type { ApiAgentApis, ApiAgentEvents } from '@shared/types/apiAgent'
 import { createTrigger } from '@shared/utility-bridger/electron/child'
 import { ZipArchive } from 'archiver'
@@ -84,18 +84,19 @@ export const pgpHandlers: ApiAgentApis = {
     if (!db) throw new Error('DB_NOT_READY')
 
     const em = db.em.fork()
-    const entities = await em.findAll(db.PgpKey, {
+    const pgpKeyEntities = await em.findAll(db.PgpKey, {
       fields: ['key_id', 'name', 'email'],
     })
 
-    return entities.map((entity) => wrap(entity).toObject())
+    return serialize(pgpKeyEntities)
   },
   async encrypt(filePaths, pubkeyIds: string[]) {
     if (!db) throw new Error('DB_NOT_READY')
 
     // query public keys
     const em = db.em.fork()
-    const pgpKeyRows = await em.find(db.PgpKey, pubkeyIds, { fields: ['public_key'] })
+    const pgpKeyEntities = await em.find(db.PgpKey, pubkeyIds, { fields: ['public_key'] })
+    const pgpKeyDtos = serialize(pgpKeyEntities)
 
     // create pack files stream
     const archive = new ZipArchive({ zlib: { level: 0 } })
@@ -119,9 +120,7 @@ export const pgpHandlers: ApiAgentApis = {
     const message = await openpgp.createMessage({ binary: stream.Readable.toWeb(archive) })
 
     const encryptionKeys = await Promise.all(
-      pgpKeyRows.map((row) => {
-        return openpgp.readKey({ armoredKey: row.public_key })
-      }),
+      pgpKeyDtos.map((row) => openpgp.readKey({ armoredKey: row.public_key })),
     )
 
     const encryptStream = await openpgp.encrypt({
@@ -167,14 +166,15 @@ export const pgpHandlers: ApiAgentApis = {
     // 找私鑰
     const encKeyIds = message.getEncryptionKeyIDs().map((keyId) => keyId.toHex())
     const em = db.em.fork()
-    const privKeyRows = await em.find(
+    const privKeyEntities = await em.find(
       db.PgpKey,
       { encryption_key_id: { $in: encKeyIds } },
       { fields: ['private_key'] },
     )
+    const privKeyDtos = serialize(privKeyEntities)
 
     const privKeys = await Promise.all(
-      privKeyRows.flatMap((row) => {
+      privKeyDtos.flatMap((row) => {
         if (!row.private_key) return []
 
         return openpgp.readPrivateKey({ armoredKey: row.private_key })

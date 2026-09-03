@@ -5,7 +5,7 @@ import { Migrator } from '@mikro-orm/migrations'
 import { defineConfig, SqliteDriver, NodeSqliteDialect } from '@mikro-orm/sql'
 
 import { Migration20260902090238 } from './migrations/Migration20260902090238'
-import { PgpKey } from './schemas/pgpKey'
+import { PgpKeySchema } from './schemas/pgpKey'
 
 const migrationFiles = fs.globSync('migrations/*.{js,ts}', { cwd: import.meta.dirname })
 export const appMigrationCount = migrationFiles.length
@@ -19,7 +19,7 @@ export function baseConfig(dbPath: string) {
     driver: SqliteDriver,
     driverOptions: new NodeSqliteDialect(dbPath),
     dbName: dbPath,
-    entities: [PgpKey],
+    entities: [PgpKeySchema],
     extensions: [Migrator],
     migrations: {
       tableName: 'schema_migrations',

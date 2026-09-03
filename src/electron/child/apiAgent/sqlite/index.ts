@@ -3,7 +3,7 @@ import type { EntityManager, EntitySchema } from '@mikro-orm/sql'
 
 import { getDbAppId, isAppId } from '@/child/apiAgent/sqlite/appIdUtils'
 import { baseConfig, appMigrationCount } from '@/child/apiAgent/sqlite/config'
-import { PgpKey } from '@/child/apiAgent/sqlite/schemas/pgpKey'
+import { PgpKeySchema } from '@/child/apiAgent/sqlite/schemas/pgpKey'
 import type { PgpKeyEntity } from '@/child/apiAgent/sqlite/schemas/pgpKey'
 
 export type OrmClient = {
@@ -18,7 +18,7 @@ export async function initDb(dbPath: string): Promise<OrmClient> {
   return {
     orm,
     em: orm.em,
-    PgpKey,
+    PgpKey: PgpKeySchema,
   }
 }
 
