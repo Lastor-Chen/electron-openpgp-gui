@@ -1,12 +1,10 @@
 export type ApiAgentApis = {
-  generateKey(opts: {
-    outputDir: string
-    name?: string
-    email?: string
-    comment?: string
-  }): Promise<void>
-  encrypt(filePaths: string[], pubkeyPaths: string[]): void
-  decrypt(filePath: string, privKeyPath: string): void
+  initDb(): Promise<string | undefined>
+  resetDb(): Promise<void>
+  generateKey(opts: { name?: string; email?: string }): Promise<void>
+  getPgpKeys(): Promise<{ key_id: string; name?: string | null; email?: string | null }[]>
+  encrypt(filePaths: string[], pubkeyIds: string[]): void
+  decrypt(filePath: string): void
 }
 
 export type ApiAgentEvents = {

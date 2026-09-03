@@ -2,43 +2,102 @@ import fs from 'node:fs'
 import path from 'node:path'
 import stream from 'node:stream'
 
+import { serialize } from '@mikro-orm/core'
 import type { ApiAgentApis, ApiAgentEvents } from '@shared/types/apiAgent'
 import { createTrigger } from '@shared/utility-bridger/electron/child'
 import { ZipArchive } from 'archiver'
 import * as openpgp from 'openpgp'
 
+import { initDb, migrateDb } from '@/child/apiAgent/sqlite'
+import type { OrmClient } from '@/child/apiAgent/sqlite'
 import { createProgressStream, renameIfExisted } from '@/child/apiAgent/utils'
 
 const trigger = createTrigger<ApiAgentEvents>()
 
-export const pgpHandlers: ApiAgentApis = {
-  async generateKey(opts) {
-    const { outputDir, name, email, comment } = opts || {}
-    const day = 365
+const dbDirArg = process.argv.find((val) => val.startsWith('--db-dir'))
+const dbDir = dbDirArg?.split('=')[1]
+const dbPath = dbDir ? path.join(dbDir, 'pgp_data') : undefined
+let db: OrmClient | undefined
 
-    if (!fs.statSync(outputDir).isDirectory()) throw new Error('outputDir invalid')
+export const pgpHandlers: ApiAgentApis = {
+  async initDb() {
+    if (db) return dbPath // 確保只執行 1 次
+
+    if (!dbPath) throw new Error('NO_DB_DIR')
+    db = await initDb(dbPath)
+
+    await migrateDb(db.orm)
+
+    return dbPath
+  },
+  async resetDb() {
+    if (!db || !dbPath) return
+
+    await db.orm.close(true)
+    fs.rmSync(dbPath, { force: true })
+
+    db = await initDb(dbPath)
+    await db.orm.migrator.up()
+  },
+  async generateKey(opts) {
+    if (!db) throw new Error('DB_NOT_READY')
+
+    const { name, email } = opts || {}
+    const day = 365
 
     const keyPair = await openpgp.generateKey({
       type: 'ecc',
       curve: 'curve25519Legacy',
-      userIDs: [{ name, email, comment }],
+      userIDs: [{ name, email }],
       format: 'armored',
       keyExpirationTime: day * (24 * 60 * 60), // in sec
     })
 
     const privKey = await openpgp.readPrivateKey({ armoredKey: keyPair.privateKey })
-    const privKeyId = privKey.getKeyID().toHex()
-    // const encKeyId = (await privKey.getEncryptionKey()).getKeyID().toHex()
+    const keyId = privKey.getKeyID().toHex()
 
-    // 先存到外部
-    const saveDir = path.join(outputDir, privKeyId)
-    fs.mkdirSync(saveDir, { recursive: true })
+    const encKey = await privKey.getEncryptionKey()
+    const encKeyId = encKey.getKeyID().toHex()
 
-    fs.writeFileSync(path.join(saveDir, 'private.asc'), keyPair.privateKey)
-    fs.writeFileSync(path.join(saveDir, 'public.asc'), keyPair.publicKey)
-    fs.writeFileSync(path.join(saveDir, 'revocation.asc'), keyPair.revocationCertificate)
+    // Returns Infinity if the key doesn't expire, or null if the key is revoked or invalid
+    // https://docs.openpgpjs.org/Key.html#getExpirationTime
+    const expirationTime = (await privKey.getExpirationTime()) as Date
+
+    const em = db.em.fork()
+    em.create(db.PgpKey, {
+      key_id: keyId,
+      is_owner: true,
+      name,
+      email,
+      encryption_key_id: encKeyId,
+      fingerprint: privKey.getFingerprint(),
+      creation_time: privKey.getCreationTime().toISOString(),
+      expiration_time: expirationTime.toISOString(),
+      public_key: keyPair.publicKey,
+      private_key: keyPair.privateKey,
+      revocation_cert: keyPair.revocationCertificate,
+    })
+
+    await em.flush()
   },
-  async encrypt(filePaths, pubkeyPaths) {
+  async getPgpKeys() {
+    if (!db) throw new Error('DB_NOT_READY')
+
+    const em = db.em.fork()
+    const pgpKeyEntities = await em.findAll(db.PgpKey, {
+      fields: ['key_id', 'name', 'email'],
+    })
+
+    return serialize(pgpKeyEntities)
+  },
+  async encrypt(filePaths, pubkeyIds: string[]) {
+    if (!db) throw new Error('DB_NOT_READY')
+
+    // query public keys
+    const em = db.em.fork()
+    const pgpKeyEntities = await em.find(db.PgpKey, pubkeyIds, { fields: ['public_key'] })
+    const pgpKeyDtos = serialize(pgpKeyEntities)
+
     // create pack files stream
     const archive = new ZipArchive({ zlib: { level: 0 } })
 
@@ -61,10 +120,7 @@ export const pgpHandlers: ApiAgentApis = {
     const message = await openpgp.createMessage({ binary: stream.Readable.toWeb(archive) })
 
     const encryptionKeys = await Promise.all(
-      pubkeyPaths.map((keyPath) => {
-        const pubkey = fs.readFileSync(keyPath, 'utf8')
-        return openpgp.readKey({ armoredKey: pubkey })
-      }),
+      pgpKeyDtos.map((row) => openpgp.readKey({ armoredKey: row.public_key })),
     )
 
     const encryptStream = await openpgp.encrypt({
@@ -98,7 +154,9 @@ export const pgpHandlers: ApiAgentApis = {
       writable,
     )
   },
-  async decrypt(filePath: string, privKeyPath: string) {
+  async decrypt(filePath: string) {
+    if (!db) throw new Error('DB_NOT_READY')
+
     const totalBytes = fs.statSync(filePath).size
 
     // read file
@@ -106,13 +164,27 @@ export const pgpHandlers: ApiAgentApis = {
     const message = await openpgp.readMessage({ binaryMessage: stream.Readable.toWeb(readable) })
 
     // 找私鑰
-    const armoredPrivKey = fs.readFileSync(privKeyPath, 'utf8')
-    const privKey = await openpgp.readPrivateKey({ armoredKey: armoredPrivKey })
+    const encKeyIds = message.getEncryptionKeyIDs().map((keyId) => keyId.toHex())
+    const em = db.em.fork()
+    const privKeyEntities = await em.find(
+      db.PgpKey,
+      { encryption_key_id: { $in: encKeyIds } },
+      { fields: ['private_key'] },
+    )
+    const privKeyDtos = serialize(privKeyEntities)
+
+    const privKeys = await Promise.all(
+      privKeyDtos.flatMap((row) => {
+        if (!row.private_key) return []
+
+        return openpgp.readPrivateKey({ armoredKey: row.private_key })
+      }),
+    )
 
     // decrypt
     const { data: decryptStream } = await openpgp.decrypt({
       message,
-      decryptionKeys: [privKey],
+      decryptionKeys: privKeys,
       format: 'binary',
       config: {
         allowUnauthenticatedStream: true,

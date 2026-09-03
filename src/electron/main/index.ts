@@ -36,6 +36,7 @@ app.whenReady().then(() => {
   forkChild(
     'apiAgent',
     path.join(process.env.APP_ROOT, 'dist-electron/electron/child/apiAgent/index.js'),
+    [`--db-dir=${app.getPath('userData')}`],
   )
 
   setupIpcMain()

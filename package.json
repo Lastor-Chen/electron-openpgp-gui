@@ -17,12 +17,17 @@
     "preview": "electron ."
   },
   "dependencies": {
+    "@mikro-orm/core": "^7.1.14",
+    "@mikro-orm/migrations": "^7.1.14",
+    "@mikro-orm/sql": "^7.1.14",
     "archiver": "^8.0.0",
     "openpgp": "^6.3.1",
     "vue": "^3.5.40"
   },
   "devDependencies": {
+    "@mikro-orm/cli": "^7.1.14",
     "@openpgp/web-stream-tools": "^0.3.1",
+    "@oxc-node/cli": "^0.1.0",
     "@types/archiver": "^8.0.0",
     "@types/node": "^24.13.3",
     "@vitejs/plugin-vue": "^6.0.8",

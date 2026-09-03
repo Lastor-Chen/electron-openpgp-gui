@@ -62,7 +62,7 @@ ipcMain.handle('invoke-child', async (_event, name: string, key: string, ...args
 export function forkChild<C extends ApiCalls, E extends ApiEvents>(
   name: ChildName,
   modulePath: string,
-  argv = [],
+  argv: string[] = [],
   options?: Electron.ForkOptions,
 ) {
   const child = utilityProcess.fork(modulePath, argv, options)

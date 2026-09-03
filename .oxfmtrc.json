@@ -4,5 +4,5 @@
   "semi": false,
   "sortImports": true,
   "endOfLine": "lf",
-  "ignorePatterns": ["dist*/**"]
+  "ignorePatterns": ["dist*/**", "src/electron/child/apiAgent/sqlite/migrations/*.json"]
 }
