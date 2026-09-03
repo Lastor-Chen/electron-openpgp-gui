@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onScopeDispose, ref } from 'vue'
+import { onMounted, onScopeDispose, ref, toRaw } from 'vue'
 
 import { apiAgentRef } from '@/composables/useChildRef'
 import { apiAgent } from '@/rpcChild'
@@ -16,6 +16,13 @@ const genKey = async () => {
   window.alert('Key pair generated')
 }
 
+const pgpKeys = ref<{ key_id: string; name?: string | null; email?: string | null }[]>([])
+const selectedKeyIds = ref<string[]>([])
+
+const getKeys = async () => {
+  pgpKeys.value = await apiAgent.getPgpKeys()
+}
+
 const progress = apiAgentRef('progress', { initValue: 0 })
 
 const encrypt = async () => {
@@ -25,17 +32,10 @@ const encrypt = async () => {
   })
   if (!files) return
 
-  const pubKeys = await window.ipcRenderer.invoke('openFileBrowser', {
-    properties: ['openFile', 'multiSelections'],
-    filters: [{ name: 'PGP keys', extensions: ['asc'] }],
-  })
-  if (!pubKeys) return
-
   const filePaths = files.map((file) => file.path)
-  const pubkeyPaths = pubKeys.map((pubkey) => pubkey.path)
 
   progress.value = 0
-  await apiAgent.encrypt(filePaths, pubkeyPaths)
+  await apiAgent.encrypt(filePaths, toRaw(selectedKeyIds.value))
 
   window.alert('Encryption successful')
 }
@@ -63,6 +63,8 @@ const decrypt = async () => {
 }
 
 onMounted(() => {
+  void getKeys()
+
   const clearMainListener = window.ipcRenderer.on('someEvent', (a, b) =>
     console.log('testEvent', { a, b }),
   )
@@ -83,6 +85,13 @@ onMounted(() => {
   </div>
 
   <div style="margin-top: 8px">
+    <select v-model="selectedKeyIds" multiple>
+      <option v-for="key in pgpKeys" :key="key.key_id" :value="key.key_id">
+        {{ key.name }}
+        {{ key.email ? `<${key.email}>` : '' }}
+        ({{ key.key_id }})
+      </option>
+    </select>
     <button @click="encrypt">Encrypt</button>
   </div>
   <div style="margin-top: 8px">

@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import stream from 'node:stream'
 
+import { wrap } from '@mikro-orm/core'
 import type { ApiAgentApis, ApiAgentEvents } from '@shared/types/apiAgent'
 import { createTrigger } from '@shared/utility-bridger/electron/child'
 import { ZipArchive } from 'archiver'
@@ -79,7 +80,23 @@ export const pgpHandlers: ApiAgentApis = {
 
     await em.flush()
   },
-  async encrypt(filePaths, pubkeyPaths) {
+  async getPgpKeys() {
+    if (!db) throw new Error('DB_NOT_READY')
+
+    const em = db.em.fork()
+    const entities = await em.findAll(db.PgpKey, {
+      fields: ['key_id', 'name', 'email'],
+    })
+
+    return entities.map((entity) => wrap(entity).toObject())
+  },
+  async encrypt(filePaths, pubkeyIds: string[]) {
+    if (!db) throw new Error('DB_NOT_READY')
+
+    // query public keys
+    const em = db.em.fork()
+    const pgpKeyRows = await em.find(db.PgpKey, pubkeyIds, { fields: ['public_key'] })
+
     // create pack files stream
     const archive = new ZipArchive({ zlib: { level: 0 } })
 
@@ -102,9 +119,8 @@ export const pgpHandlers: ApiAgentApis = {
     const message = await openpgp.createMessage({ binary: stream.Readable.toWeb(archive) })
 
     const encryptionKeys = await Promise.all(
-      pubkeyPaths.map((keyPath) => {
-        const pubkey = fs.readFileSync(keyPath, 'utf8')
-        return openpgp.readKey({ armoredKey: pubkey })
+      pgpKeyRows.map((row) => {
+        return openpgp.readKey({ armoredKey: row.public_key })
       }),
     )
 
