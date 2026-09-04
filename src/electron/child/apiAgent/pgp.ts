@@ -104,17 +104,26 @@ export const pgpHandlers: ApiAgentApis = {
     let totalBytes = 0
     filePaths.forEach((file) => {
       const stat = fs.statSync(file)
-      totalBytes += stat.size
       const name = path.basename(file)
 
-      if (stat.isDirectory()) {
+      if (stat.isFile()) {
+        totalBytes += stat.size
+
+        archive.file(file, { name })
+      } else if (stat.isDirectory()) {
+        const dirFiles = fs.readdirSync(file, { recursive: true, encoding: 'utf8' })
+        dirFiles.forEach((dirFile) => {
+          const subStat = fs.statSync(path.join(file, dirFile))
+          if (subStat.isFile()) totalBytes += subStat.size
+        })
+
         archive.directory(file, name)
       } else {
-        archive.file(file, { name })
+        throw new Error(`Unsupported: ${file}`)
       }
     })
 
-    archive.finalize()
+    void archive.finalize()
 
     // create encrypt stream
     const message = await openpgp.createMessage({ binary: stream.Readable.toWeb(archive) })
