@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onScopeDispose, ref, toRaw } from 'vue'
 
+import { Button } from '@/components/ui/button'
 import { apiAgentRef } from '@/composables/useChildRef'
 import { apiAgent } from '@/rpcChild'
 
@@ -74,7 +75,7 @@ onMounted(() => {
   <div>
     <input v-model="name" type="text" placeholder="name" />
     <input v-model="email" type="text" placeholder="email" />
-    <button @click="genKey">Generate Key</button>
+    <Button @click="genKey">Generate Key</Button>
   </div>
 
   <div style="margin-top: 8px">
