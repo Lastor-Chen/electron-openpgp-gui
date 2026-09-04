@@ -21,5 +21,5 @@
       "@utility-bridger/*": ["./src/shared/utility-bridger/*"]
     }
   },
-  "include": ["src/renderer", "src/shared/utility-bridger/vue"]
+  "include": ["src/renderer/**/*.ts", "src/renderer/**/*.vue", "src/shared/utility-bridger/vue"]
 }

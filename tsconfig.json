@@ -4,5 +4,11 @@
     { "path": "./tsconfig.electron.json" },
     { "path": "./tsconfig.renderer.json" },
     { "path": "./tsconfig.project.json" }
-  ]
+  ],
+  "compilerOptions": {
+    // for shadcn
+    "paths": {
+      "@/*": ["./src/renderer/*"]
+    }
+  }
 }

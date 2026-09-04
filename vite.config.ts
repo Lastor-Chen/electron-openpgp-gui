@@ -1,5 +1,3 @@
-import path from 'node:path'
-
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import type { InlineConfig } from 'tsdown'
@@ -62,11 +60,7 @@ export default defineConfig(({ command }) => {
       }),
     ],
     resolve: {
-      alias: {
-        '@': path.join(import.meta.dirname, './src/renderer'),
-        '@shared': path.join(import.meta.dirname, './src/shared'),
-        '@utility-bridger': path.join(import.meta.dirname, './src/shared/utility-bridger'),
-      },
+      tsconfigPaths: true,
     },
   }
 })
