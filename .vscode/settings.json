@@ -14,5 +14,10 @@
   },
   "[html]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  // resolve tailwind at-rules warn
+  // https://github.com/tailwindlabs/tailwindcss/discussions/5258
+  "files.associations": {
+    "*.css": "tailwindcss"
   }
 }

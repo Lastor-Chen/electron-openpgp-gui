@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import Index from '@/pages/index.vue'
 import { apiAgent } from '@/rpcChild'
 
 apiAgent.initDb().catch((err: Error) => {
@@ -17,5 +16,7 @@ apiAgent.initDb().catch((err: Error) => {
 </script>
 
 <template>
-  <Index />
+  <main>
+    <RouterView />
+  </main>
 </template>
