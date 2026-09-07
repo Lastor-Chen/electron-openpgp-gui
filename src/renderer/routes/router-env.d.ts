@@ -6,6 +6,6 @@ import 'vue-router'
 declare module 'vue-router' {
   interface RouteMeta {
     // add custom props...
-    label: string
+    navLabel: string
   }
 }

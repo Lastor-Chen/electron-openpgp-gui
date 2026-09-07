@@ -8,21 +8,21 @@ export const router = createRouter({
     {
       path: '/',
       meta: {
-        label: 'Keys',
+        navLabel: 'Keys',
       },
       component: Index,
     },
     {
       path: '/encrypt',
       meta: {
-        label: 'Encrypt',
+        navLabel: 'Encrypt',
       },
       component: () => import('@/pages/Encrypt/index.vue'),
     },
     {
       path: '/decrypt',
       meta: {
-        label: 'Decrypt',
+        navLabel: 'Decrypt',
       },
       component: () => import('@/pages/Decrypt/index.vue'),
     },
