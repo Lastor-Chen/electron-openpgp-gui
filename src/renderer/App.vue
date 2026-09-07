@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { onMounted, onScopeDispose } from 'vue'
+
+import Index from '@/pages/index.vue'
 import { apiAgent } from '@/rpcChild'
 
 apiAgent.initDb().catch((err: Error) => {
@@ -13,10 +16,14 @@ apiAgent.initDb().catch((err: Error) => {
     }
   }
 })
+
+onMounted(() => {
+  const clearChildListener = apiAgent.onCrash((err) => window.alert(`ApiAgent crashed: ${err}`))
+
+  onScopeDispose(() => clearChildListener())
+})
 </script>
 
 <template>
-  <main>
-    <RouterView />
-  </main>
+  <Index />
 </template>
