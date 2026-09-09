@@ -4,8 +4,8 @@
     {
       "name": "pgp_key",
       "columns": {
-        "creation_time": {
-          "name": "creation_time",
+        "created": {
+          "name": "created",
           "type": "date",
           "unsigned": false,
           "autoincrement": false,
@@ -55,8 +55,8 @@
           "enumItems": [],
           "mappedType": "text"
         },
-        "expiration_time": {
-          "name": "expiration_time",
+        "expires": {
+          "name": "expires",
           "type": "date",
           "unsigned": false,
           "autoincrement": false,

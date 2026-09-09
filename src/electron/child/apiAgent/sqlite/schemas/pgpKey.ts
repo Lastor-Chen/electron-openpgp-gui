@@ -11,8 +11,8 @@ export const PgpKeySchema = defineEntity({
     email: p.text().nullable(),
     encryption_key_id: p.text().unique(),
     fingerprint: p.text().unique(),
-    creation_time: p.date(), // 不是 row 的 timestamp
-    expiration_time: p.date().nullable(), // 不是 row 的 timestamp
+    created: p.date(), // 不是 row 的 timestamp
+    expires: p.date().nullable(), // 不是 row 的 timestamp
     public_key: p.text(),
     private_key: p.text().nullable(),
     revocation_cert: p.text().nullable(),

@@ -16,6 +16,6 @@ export type PgpKeysResponse = {
   is_owner: boolean
   name?: string | null
   email?: string | null
-  expiration_time?: string | null
+  expires?: string | null
   fingerprint: string
 }[]

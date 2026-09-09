@@ -71,8 +71,8 @@ export const pgpHandlers: ApiAgentApis = {
       email,
       encryption_key_id: encKeyId,
       fingerprint: privKey.getFingerprint(),
-      creation_time: privKey.getCreationTime().toISOString(),
-      expiration_time: expirationTime.toISOString(),
+      created: privKey.getCreationTime().toISOString(),
+      expires: expirationTime.toISOString(),
       public_key: keyPair.publicKey,
       private_key: keyPair.privateKey,
       revocation_cert: keyPair.revocationCertificate,
@@ -85,7 +85,7 @@ export const pgpHandlers: ApiAgentApis = {
 
     const em = db.em.fork()
     const pgpKeyEntities = await em.findAll(db.PgpKey, {
-      fields: ['key_id', 'is_owner', 'name', 'email', 'expiration_time', 'fingerprint'],
+      fields: ['key_id', 'is_owner', 'name', 'email', 'expires', 'fingerprint'],
     })
 
     return serialize(pgpKeyEntities)

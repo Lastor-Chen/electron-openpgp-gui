@@ -81,7 +81,7 @@ const formatDate = (iso?: string | null) => {
           <TableCell class="truncate">
             {{ row.email || '-' }}
           </TableCell>
-          <TableCell>{{ formatDate(row.expiration_time) || '-' }}</TableCell>
+          <TableCell>{{ formatDate(row.expires) || '-' }}</TableCell>
           <TableCell class="tabular-nums font-mono">{{
             formatFingerprint(row.key_id) || '-'
           }}</TableCell>
