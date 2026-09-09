@@ -12,6 +12,8 @@ export function openMainWindow() {
   if (existed && !existed.isDestroyed()) return existed.focus()
 
   const win = new BrowserWindow({
+    width: 875,
+    height: 500,
     useContentSize: true,
     resizable: false,
     webPreferences: {

@@ -85,7 +85,7 @@ export const pgpHandlers: ApiAgentApis = {
 
     const em = db.em.fork()
     const pgpKeyEntities = await em.findAll(db.PgpKey, {
-      fields: ['key_id', 'name', 'email'],
+      fields: ['key_id', 'is_owner', 'name', 'email', 'expiration_time', 'fingerprint'],
     })
 
     return serialize(pgpKeyEntities)
