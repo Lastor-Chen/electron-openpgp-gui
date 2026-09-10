@@ -4,7 +4,6 @@ import { useAsyncState } from '@vueuse/core'
 import { ref } from 'vue'
 
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   Table,
   TableHeader,
@@ -13,21 +12,14 @@ import {
   TableBody,
   TableCell,
 } from '@/components/ui/table'
+import CreateDialog from '@/pages/Keys/CreateDialog.vue'
 import { apiAgent } from '@/rpcChild'
 
-const name = ref<string>()
-const email = ref<string>()
-
-const genKey = async () => {
-  await apiAgent.generateKey({
-    name: name.value || undefined,
-    email: email.value || undefined,
-  })
-
-  window.alert('Key pair generated')
-}
-
-const { state: keys, error } = useAsyncState(async () => {
+const {
+  state: keys,
+  error,
+  execute: getPgpKeys,
+} = useAsyncState(async () => {
   return await apiAgent.getPgpKeys()
 }, [])
 
@@ -48,19 +40,25 @@ const formatDate = (iso?: string | null) => {
   if (!iso) return ''
   return dateFormatter.format(new Date(iso))
 }
+
+const openModal = ref(false)
+const onCreated = () => {
+  void getPgpKeys()
+}
+const onFailed = (err: Error) => {
+  window.alert(String(err))
+}
 </script>
 
 <template>
   <div class="px-4 mt-4">
-    <div v-if="false" class="flex gap-x-2 pt-4 px-2">
-      <Input v-model="name" type="text" placeholder="name" />
-      <Input v-model="email" type="email" placeholder="email" />
-    </div>
     <div class="mb-4 space-x-2">
-      <Button @click="genKey">+ New</Button>
+      <Button @click="openModal = true">+ New</Button>
       <Button variant="outline">Import</Button>
       <Button variant="outline">Export</Button>
     </div>
+
+    <CreateDialog v-model:open="openModal" @created="onCreated" @failed="onFailed" />
 
     <Table wrapper-class="border rounded max-h-[335px]" class="table-fixed">
       <TableHeader>

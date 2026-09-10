@@ -42,13 +42,16 @@ export const pgpHandlers: ApiAgentApis = {
   async generateKey(opts) {
     if (!db) throw new Error('DB_NOT_READY')
 
-    const { name, email } = opts || {}
+    const userId: openpgp.UserID = {
+      name: opts.name?.trim() || undefined,
+      email: opts.email?.trim() || undefined,
+    }
     const day = 365
 
     const keyPair = await openpgp.generateKey({
       type: 'ecc',
       curve: 'curve25519Legacy',
-      userIDs: [{ name, email }],
+      userIDs: [userId],
       format: 'armored',
       keyExpirationTime: day * (24 * 60 * 60), // in sec
     })
@@ -67,8 +70,8 @@ export const pgpHandlers: ApiAgentApis = {
     em.create(db.PgpKey, {
       key_id: keyId,
       is_owner: true,
-      name,
-      email,
+      name: userId.name,
+      email: userId.email,
       encryption_key_id: encKeyId,
       fingerprint: privKey.getFingerprint(),
       created: privKey.getCreationTime().toISOString(),
