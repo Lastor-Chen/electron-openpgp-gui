@@ -12,8 +12,11 @@ import {
   TableBody,
   TableCell,
 } from '@/components/ui/table'
+import { injectConfirmModal } from '@/composables/useConfirmModal'
 import CreateDialog from '@/pages/Keys/CreateDialog.vue'
 import { apiAgent } from '@/rpcChild'
+
+const modal = injectConfirmModal()
 
 const {
   state: keys,
@@ -44,9 +47,21 @@ const formatDate = (iso?: string | null) => {
 const openModal = ref(false)
 const onCreated = () => {
   void getPgpKeys()
+
+  void modal.open({
+    icon: 'success',
+    title: 'Key pair created',
+    cancelText: false,
+  })
 }
 const onFailed = (err: Error) => {
-  window.alert(String(err))
+  void modal.open({
+    icon: 'error',
+    title: err.name,
+    content: err.message,
+    confirmText: 'Close',
+    cancelText: false,
+  })
 }
 </script>
 

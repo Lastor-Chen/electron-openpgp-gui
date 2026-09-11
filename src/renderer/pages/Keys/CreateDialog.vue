@@ -39,10 +39,11 @@ const genKey = async () => {
       email: email.value,
     })
 
-    open.value = false
     emits('created')
   } catch (err) {
     emits('failed', err as Error)
+  } finally {
+    open.value = false
   }
 }
 </script>
