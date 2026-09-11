@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Check } from '@lucide/vue'
 import { useAsyncState } from '@vueuse/core'
-import { ref } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -12,11 +11,8 @@ import {
   TableBody,
   TableCell,
 } from '@/components/ui/table'
-import { injectConfirmModal } from '@/composables/useConfirmModal'
 import CreateDialog from '@/pages/Keys/CreateDialog.vue'
 import { apiAgent } from '@/rpcChild'
-
-const modal = injectConfirmModal()
 
 const {
   state: keys,
@@ -44,36 +40,18 @@ const formatDate = (iso?: string | null) => {
   return dateFormatter.format(new Date(iso))
 }
 
-const openModal = ref(false)
-const onCreated = () => {
+const onKeyCreated = () => {
   void getPgpKeys()
-
-  void modal.open({
-    icon: 'success',
-    title: 'Key pair created',
-    cancelText: false,
-  })
-}
-const onFailed = (err: Error) => {
-  void modal.open({
-    icon: 'error',
-    title: err.name,
-    content: err.message,
-    confirmText: 'Close',
-    cancelText: false,
-  })
 }
 </script>
 
 <template>
   <div class="px-4 mt-4">
     <div class="mb-4 space-x-2">
-      <Button @click="openModal = true">+ New</Button>
+      <CreateDialog @created="onKeyCreated" />
       <Button variant="outline">Import</Button>
       <Button variant="outline">Export</Button>
     </div>
-
-    <CreateDialog v-model:open="openModal" @created="onCreated" @failed="onFailed" />
 
     <Table wrapper-class="border rounded max-h-[335px]" class="table-fixed">
       <TableHeader>
