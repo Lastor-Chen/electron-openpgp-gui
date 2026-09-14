@@ -17,8 +17,9 @@ import { apiAgent } from '@/rpcChild'
 
 const emits = defineEmits<{
   created: []
-  failed: [error: Error]
 }>()
+
+const modal = injectConfirmModal()
 
 const open = ref<boolean>()
 watch(open, (isOpen) => {
@@ -28,8 +29,6 @@ watch(open, (isOpen) => {
     errMsg.value = ''
   }
 })
-
-const modal = injectConfirmModal()
 
 const name = ref<string>()
 const email = ref<string>()
@@ -77,7 +76,6 @@ const genKey = async () => {
       confirmText: 'Close',
       cancelText: false,
     })
-    emits('failed', err as Error)
   } finally {
     open.value = false
   }

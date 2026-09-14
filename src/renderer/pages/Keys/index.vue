@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Check } from '@lucide/vue'
+import type { PgpKeysResponse } from '@shared/types/apiAgent'
 import { useAsyncState } from '@vueuse/core'
+import { ref } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -11,8 +13,11 @@ import {
   TableBody,
   TableCell,
 } from '@/components/ui/table'
+import ContextMenu from '@/pages/Keys/ContextMenu.vue'
 import CreateDialog from '@/pages/Keys/CreateDialog.vue'
 import { apiAgent } from '@/rpcChild'
+
+const selectedKey = ref<PgpKeysResponse[number]>()
 
 const {
   state: keys,
@@ -39,16 +44,12 @@ const formatDate = (iso?: string | null) => {
   if (!iso) return ''
   return dateFormatter.format(new Date(iso))
 }
-
-const onKeyCreated = () => {
-  void getPgpKeys()
-}
 </script>
 
 <template>
   <div class="px-4 mt-4">
     <div class="mb-4 space-x-2">
-      <CreateDialog @created="onKeyCreated" />
+      <CreateDialog @created="getPgpKeys()" />
       <Button variant="outline">Import</Button>
       <Button variant="outline">Export</Button>
     </div>
@@ -63,25 +64,27 @@ const onKeyCreated = () => {
           <TableHead class="w-30/100">Key ID</TableHead>
         </TableRow>
       </TableHeader>
-      <TableBody>
-        <TableRow v-for="row in keys" :key="row.key_id">
-          <TableCell class="text-center">
-            <Check v-if="row.is_owner" class="inline" :size="16" />
-          </TableCell>
-          <TableCell class="truncate">{{ row.name || '-' }}</TableCell>
-          <TableCell class="truncate">
-            {{ row.email || '-' }}
-          </TableCell>
-          <TableCell>{{ formatDate(row.expires) || '-' }}</TableCell>
-          <TableCell class="tabular-nums font-mono">{{
-            formatFingerprint(row.key_id) || '-'
-          }}</TableCell>
-        </TableRow>
+      <ContextMenu :selected="selectedKey" @data-changed="getPgpKeys()">
+        <TableBody>
+          <TableRow v-for="row in keys" :key="row.key_id" @contextmenu="selectedKey = row">
+            <TableCell class="text-center">
+              <Check v-if="row.is_owner" class="inline" :size="16" />
+            </TableCell>
+            <TableCell class="truncate">{{ row.name || '-' }}</TableCell>
+            <TableCell class="truncate">
+              {{ row.email || '-' }}
+            </TableCell>
+            <TableCell>{{ formatDate(row.expires) || '-' }}</TableCell>
+            <TableCell class="tabular-nums font-mono">{{
+              formatFingerprint(row.key_id) || '-'
+            }}</TableCell>
+          </TableRow>
 
-        <TableRow v-if="error || !keys.length">
-          <TableCell colspan="5" class="text-center">{{ error || 'Nothing' }}</TableCell>
-        </TableRow>
-      </TableBody>
+          <TableRow v-if="error || !keys.length">
+            <TableCell colspan="5" class="text-center">{{ error || 'Nothing' }}</TableCell>
+          </TableRow>
+        </TableBody>
+      </ContextMenu>
     </Table>
   </div>
 </template>

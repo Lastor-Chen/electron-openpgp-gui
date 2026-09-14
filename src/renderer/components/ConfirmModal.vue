@@ -76,7 +76,7 @@ defineExpose({
           <template v-if="isComponent(config?.content)">
             <component :is="config.content" />
           </template>
-          <span v-else-if="config?.content" class="wrap-anywhere">
+          <span v-else-if="config?.content" class="wrap-anywhere whitespace-pre-wrap">
             {{ config.content }}
           </span>
           <slot v-else :name="config?.slot || 'default'" />

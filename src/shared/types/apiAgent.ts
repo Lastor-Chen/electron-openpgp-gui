@@ -3,6 +3,7 @@ export type ApiAgentApis = {
   resetDb(): Promise<void>
   generateKey(opts: { name?: string; email?: string }): Promise<void>
   getPgpKeys(): Promise<PgpKeysResponse>
+  deleteKey(keyId: string): Promise<void>
   encrypt(filePaths: string[], pubkeyIds: string[]): void
   decrypt(filePath: string): void
 }
