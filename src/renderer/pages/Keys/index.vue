@@ -13,9 +13,12 @@ import {
   TableBody,
   TableCell,
 } from '@/components/ui/table'
+import { injectConfirmModal } from '@/composables/useConfirmModal'
 import ContextMenu from '@/pages/Keys/ContextMenu.vue'
 import CreateDialog from '@/pages/Keys/CreateDialog.vue'
 import { apiAgent } from '@/rpcChild'
+
+const modal = injectConfirmModal()
 
 const contextTarget = ref<PgpKeysResponse[number]>()
 const selectedKeyIds = ref<Set<string>>(new Set())
@@ -89,14 +92,95 @@ const unSelectAll = () => {
   selectedKeyIds.value.clear()
   anchorIndex.value = undefined
 }
+
+const onImport = async () => {
+  const files = await window.ipcRenderer.invoke('openFileBrowser', {
+    properties: ['openFile'],
+    filters: [{ name: 'PGP key', extensions: ['asc'] }],
+  })
+  if (!files || !files[0]) return
+
+  const { path: filePath } = files[0]
+
+  try {
+    const importedKeys = await apiAgent.importKey(filePath)
+
+    void modal.open({
+      icon: 'success',
+      title: 'Import successful',
+      content: importedKeys.map((key) => `${key.name} <${key.email}> (${key.key_id})`).join('\n'),
+      cancelText: false,
+    })
+
+    void getPgpKeys()
+  } catch (err) {
+    void modal.open({
+      icon: 'error',
+      title: 'Error',
+      content: err instanceof Error ? err.message : String(err),
+      confirmText: 'Close',
+      cancelText: false,
+    })
+  }
+}
+
+const onExport = async (e?: PointerEvent) => {
+  e?.stopPropagation()
+
+  if (!selectedKeys.value.length) {
+    return void modal.open({
+      icon: 'warn',
+      title: 'Export key(s)',
+      content: 'Please select key(s) first.',
+      confirmText: 'OK',
+      cancelText: false,
+    })
+  }
+
+  let defaultName = ''
+  if (selectedKeys.value.length === 1) {
+    const { key_id, name } = selectedKeys.value[0]!
+    const shortKeyId = key_id?.slice(-8).toUpperCase()
+    defaultName = name ? `${name}_${shortKeyId}` : shortKeyId
+  } else {
+    defaultName = `${selectedKeys.value.length}_PGP_Keys`
+  }
+
+  const file = await window.ipcRenderer.invoke('saveFileBrowser', {
+    defaultPath: defaultName,
+    filters: [{ name: 'ASC', extensions: ['asc'] }],
+  })
+  if (!file) return
+
+  try {
+    await apiAgent.exportKeys([...selectedKeyIds.value], file.path)
+
+    void modal.open({
+      icon: 'success',
+      title: 'Export public key(s) successful',
+      content: selectedKeys.value
+        .map((key) => `${key.name} <${key.email}> (${key.key_id})`)
+        .join('\n'),
+      cancelText: false,
+    })
+  } catch (err) {
+    void modal.open({
+      icon: 'error',
+      title: 'Error',
+      content: err instanceof Error ? err.message : String(err),
+      confirmText: 'Close',
+      cancelText: false,
+    })
+  }
+}
 </script>
 
 <template>
   <div class="h-full px-4 pt-4" @click="unSelectAll">
     <div class="mb-4 space-x-2">
       <CreateDialog @created="getPgpKeys()" />
-      <Button variant="outline">Import</Button>
-      <Button variant="outline">Export</Button>
+      <Button variant="outline" @click="onImport">Import</Button>
+      <Button variant="outline" @click="(e: PointerEvent) => onExport(e)">Export</Button>
     </div>
 
     <Table wrapper-class="border rounded max-h-[335px]" class="table-fixed select-none">
@@ -109,7 +193,7 @@ const unSelectAll = () => {
           <TableHead class="w-30/100">Key ID</TableHead>
         </TableRow>
       </TableHeader>
-      <ContextMenu :selected="selectedKeys" @data-changed="getPgpKeys()">
+      <ContextMenu :selected="selectedKeys" @data-changed="getPgpKeys()" @export="() => onExport()">
         <TableBody>
           <TableRow
             v-for="(row, index) in keys"

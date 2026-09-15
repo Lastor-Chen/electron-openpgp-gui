@@ -14,6 +14,10 @@ export type IpcMainApis = {
     properties?: ('openDirectory' | 'openFile' | 'multiSelections')[]
     filters?: { name: string; extensions: string[] }[]
   }): { path: string; basename: string; dirname: string }[] | undefined
+  saveFileBrowser(opts: {
+    defaultPath?: string
+    filters?: { name: string; extensions: string[] }[]
+  }): { path: string; basename: string; dirname: string } | undefined
 }
 
 export type IpcMainEvents = {

@@ -10,12 +10,10 @@ const decrypt = async () => {
     properties: ['openFile'],
     filters: [{ name: 'PGP Files', extensions: ['pgp', 'gpg'] }],
   })
-  if (!files) return
-
-  const filePaths = files.map((file) => file.path)
+  if (!files || !files[0]) return
 
   progress.value = 0
-  await apiAgent.decrypt(filePaths[0])
+  await apiAgent.decrypt(files[0].path)
 
   window.alert('Decryption successful')
 }

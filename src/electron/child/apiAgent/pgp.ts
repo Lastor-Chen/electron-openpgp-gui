@@ -100,6 +100,92 @@ export const pgpHandlers: ApiAgentApis = {
     const em = db.em.fork()
     await em.nativeDelete(db.PgpKey, { key_id: keyIds })
   },
+  async exportKeys(keyIds, outputPath) {
+    if (!db) throw new Error('DB_NOT_READY')
+
+    const em = db.em.fork()
+    const pgpKeyEntities = await em.find(db.PgpKey, { key_id: keyIds })
+    if (!pgpKeyEntities.length) return
+
+    const keyRows = serialize(pgpKeyEntities)
+
+    // 合併成一個 armored block string
+    // https://github.com/openpgpjs/openpgpjs/issues/466
+    const packetList = new openpgp.PacketList()
+    const pgpKeys = await Promise.all(
+      keyRows.map((row) => {
+        return openpgp.readKey({ armoredKey: row.public_key })
+      }),
+    )
+
+    for (const key of pgpKeys) {
+      key.toPacketList().forEach((packet) => packetList.push(packet))
+    }
+
+    const armored = openpgp.armor(openpgp.enums.armor.publicKey, packetList.write())
+    fs.writeFileSync(outputPath, armored, 'utf8')
+  },
+  async importKey(filePath: string) {
+    if (!db) throw new Error('DB_NOT_READY')
+
+    const rawStr = fs.readFileSync(filePath, 'utf8')
+
+    // 兩種情況:
+    // 單一 armored block 內含多把 keys
+    // 多個 armored block
+    const splitArmoredKeys =
+      rawStr.match(
+        /-----BEGIN PGP (PUBLIC|PRIVATE) KEY BLOCK-----[\s\S]+?-----END PGP \1 KEY BLOCK-----/g,
+      ) || []
+
+    let keys: openpgp.Key[] = []
+    if (splitArmoredKeys.length > 1) {
+      const keysArr = await Promise.all(
+        splitArmoredKeys.map((armored) => openpgp.readKeys({ armoredKeys: armored })),
+      )
+      keys = keysArr.flat()
+    } else {
+      keys = await openpgp.readKeys({ armoredKeys: rawStr })
+    }
+
+    const keyInfos = await Promise.all(
+      keys.map(async (key) => {
+        const [primaryUser, encryptionKey, expirationTime] = await Promise.all([
+          key.getPrimaryUser(),
+          key.getEncryptionKey(),
+          key.getExpirationTime(),
+        ])
+
+        return {
+          key_id: key.getKeyID().toHex(),
+          is_owner: false,
+          name: primaryUser.user.userID?.name,
+          email: primaryUser.user.userID?.email,
+          encryption_key_id: encryptionKey.getKeyID().toHex(),
+          fingerprint: key.getFingerprint(),
+          created: key.getCreationTime().toISOString(),
+          expires: expirationTime instanceof Date ? expirationTime.toISOString() : null,
+          public_key: key.toPublic().armor(),
+          private_key: key.isPrivate() ? key.armor() : null,
+          // 只能從已被 revoked 的私鑰取得, 邏輯上匯入時不需要
+          revocation_cert: null,
+        }
+      }),
+    )
+
+    const em = db.em.fork()
+    keyInfos.forEach((key) => {
+      em.create(db!.PgpKey, key)
+    })
+
+    await em.flush()
+
+    return keyInfos.map((key) => ({
+      key_id: key.key_id,
+      name: key.name,
+      email: key.email,
+    }))
+  },
   async encrypt(filePaths, pubkeyIds: string[]) {
     if (!db) throw new Error('DB_NOT_READY')
 

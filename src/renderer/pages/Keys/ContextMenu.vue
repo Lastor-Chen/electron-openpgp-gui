@@ -15,6 +15,7 @@ const props = defineProps<{
 }>()
 
 const emits = defineEmits<{
+  export: []
   dataChanged: []
 }>()
 
@@ -60,7 +61,7 @@ const onDelete = async () => {
       <slot />
     </ContextMenuTrigger>
     <ContextMenuContent>
-      <ContextMenuItem>Export</ContextMenuItem>
+      <ContextMenuItem @select="emits('export')">Export</ContextMenuItem>
       <ContextMenuItem @select="onDelete">Delete</ContextMenuItem>
     </ContextMenuContent>
   </ContextMenu>
