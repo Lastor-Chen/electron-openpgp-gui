@@ -6,6 +6,7 @@ export interface CustomImportMetaEnv {
 export interface AppInfo {
   version: string
   env: string
+  platform: string
 }
 
 export type IpcMainApis = {

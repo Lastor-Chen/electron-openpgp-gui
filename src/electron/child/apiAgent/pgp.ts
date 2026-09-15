@@ -93,12 +93,12 @@ export const pgpHandlers: ApiAgentApis = {
 
     return serialize(pgpKeyEntities)
   },
-  async deleteKey(keyId) {
+  async deleteKey(keyIds) {
     if (!db) throw new Error('DB_NOT_READY')
-    if (!keyId) return
+    if (!keyIds?.length) return
 
     const em = db.em.fork()
-    await em.nativeDelete(db.PgpKey, { key_id: keyId })
+    await em.nativeDelete(db.PgpKey, { key_id: keyIds })
   },
   async encrypt(filePaths, pubkeyIds: string[]) {
     if (!db) throw new Error('DB_NOT_READY')

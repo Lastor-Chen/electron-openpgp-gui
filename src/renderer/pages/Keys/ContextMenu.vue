@@ -11,7 +11,7 @@ import { injectConfirmModal } from '@/composables/useConfirmModal'
 import { apiAgent } from '@/rpcChild'
 
 const props = defineProps<{
-  selected?: PgpKeysResponse[number]
+  selected?: PgpKeysResponse
 }>()
 
 const emits = defineEmits<{
@@ -22,19 +22,25 @@ const modal = injectConfirmModal()
 
 const onDelete = async () => {
   if (!props.selected) return
-  const { name, email, key_id } = props.selected
+
+  const keyInfos: string[] = []
+  const keyIds: string[] = []
+  props.selected.forEach((row) => {
+    keyInfos.push(`${row.name} <${row.email}> (${row.key_id})`)
+    keyIds.push(row.key_id)
+  })
 
   const isConfirmed = await modal.open({
     icon: 'warn',
     title: 'Delete key(s)',
-    content: `${name} <${email}> (${key_id})`,
+    content: keyInfos.join('\n'),
     confirmText: 'Delete',
     cancelText: true,
   })
   if (!isConfirmed) return
 
   try {
-    await apiAgent.deleteKey(props.selected.key_id)
+    await apiAgent.deleteKey(keyIds)
     emits('dataChanged')
   } catch (err) {
     void modal.open({
