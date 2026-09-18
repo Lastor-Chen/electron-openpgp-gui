@@ -188,7 +188,7 @@ const onExport = async (e?: PointerEvent) => {
     <Table wrapper-class="border rounded max-h-[335px]" class="table-fixed select-none">
       <TableHeader>
         <TableRow class="sticky top-0 z-1 bg-gray-100">
-          <TableHead class="w-8/100">Owned</TableHead>
+          <TableHead class="w-8/100">Private</TableHead>
           <TableHead class="w-18/100">Name</TableHead>
           <TableHead class="w-25/100">Email</TableHead>
           <TableHead class="w-15/100">Expires</TableHead>
@@ -205,8 +205,8 @@ const onExport = async (e?: PointerEvent) => {
             @contextmenu="contextTarget = row"
             @click="(e: MouseEvent) => onSelectRow(e, row.key_id, index)"
           >
-            <TableCell class="text-center">
-              <Check v-if="row.is_owner" class="inline" :size="16" />
+            <TableCell>
+              <Check v-if="row.has_private" class="inline" :size="16" />
             </TableCell>
             <TableCell class="truncate">{{ row.name || '-' }}</TableCell>
             <TableCell class="truncate">

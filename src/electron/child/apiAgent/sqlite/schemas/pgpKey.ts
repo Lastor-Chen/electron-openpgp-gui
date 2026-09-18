@@ -6,7 +6,6 @@ export const PgpKeySchema = defineEntity({
   tableName: 'pgp_key',
   properties: {
     key_id: p.text().primary(),
-    is_owner: p.boolean(),
     name: p.text().nullable(),
     email: p.text().nullable(),
     encryption_key_id: p.text().unique(),
@@ -15,6 +14,7 @@ export const PgpKeySchema = defineEntity({
     expires: p.date().nullable(), // 不是 row 的 timestamp
     public_key: p.text(),
     private_key: p.text().nullable(),
+    has_private: p.boolean().formula("NULLIF(private_key, '') IS NOT NULL"),
     revocation_cert: p.text().nullable(),
   },
 })

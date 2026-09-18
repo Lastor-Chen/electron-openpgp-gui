@@ -69,7 +69,6 @@ export const pgpHandlers: ApiAgentApis = {
     const em = db.em.fork()
     em.create(db.PgpKey, {
       key_id: keyId,
-      is_owner: true,
       name: userId.name,
       email: userId.email,
       encryption_key_id: encKeyId,
@@ -88,7 +87,7 @@ export const pgpHandlers: ApiAgentApis = {
 
     const em = db.em.fork()
     const pgpKeyEntities = await em.findAll(db.PgpKey, {
-      fields: ['key_id', 'is_owner', 'name', 'email', 'expires', 'fingerprint'],
+      fields: ['key_id', 'name', 'email', 'expires', 'fingerprint', 'has_private'],
     })
 
     return serialize(pgpKeyEntities)
@@ -162,7 +161,6 @@ export const pgpHandlers: ApiAgentApis = {
 
         return {
           key_id: key.getKeyID().toHex(),
-          is_owner: false,
           name: primaryUser.user.userID?.name,
           email: primaryUser.user.userID?.email,
           encryption_key_id: encryptionKey.getKeyID().toHex(),

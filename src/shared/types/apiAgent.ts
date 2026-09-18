@@ -20,7 +20,7 @@ export type ApiAgentEvents = {
 
 export type TPgpKey = {
   key_id: string
-  is_owner: boolean
+  has_private: boolean
   name?: string | null
   email?: string | null
   expires?: string | null
