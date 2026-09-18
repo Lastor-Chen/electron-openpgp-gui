@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import stream from 'node:stream'
 
-import { serialize, wrap } from '@mikro-orm/core'
+import { raw, serialize, wrap } from '@mikro-orm/core'
 import type { ApiAgentApis, ApiAgentEvents, PgpKeyUser } from '@shared/types/apiAgent'
 import { createTrigger } from '@shared/utility-bridger/electron/child'
 import { ZipArchive } from 'archiver'
@@ -87,11 +87,20 @@ export const pgpHandlers: ApiAgentApis = {
     if (!db) throw new Error('DB_NOT_READY')
 
     const em = db.em.fork()
-    const pgpKeyEntities = await em.findAll(db.PgpKey, {
-      fields: ['key_id', 'is_owner', 'name', 'email', 'expires', 'fingerprint'],
-    })
+    const res = await em
+      .createQueryBuilder(db.PgpKey)
+      .select(['key_id', 'is_owner', 'name', 'email', 'expires', 'fingerprint'])
+      .addSelect(raw('private_key IS NOT NULL').as('has_private'))
+      .execute()
 
-    return serialize(pgpKeyEntities)
+    return res
+
+    // const em = db.em.fork()
+    // const pgpKeyEntities = await em.findAll(db.PgpKey, {
+    //   fields: ['key_id', 'is_owner', 'name', 'email', 'expires', 'fingerprint', 'has_private'],
+    // })
+
+    // return serialize(pgpKeyEntities)
   },
   async deleteKey(keyIds) {
     if (!db) throw new Error('DB_NOT_READY')
