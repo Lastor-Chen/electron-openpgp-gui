@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Check } from '@lucide/vue'
-import type { PgpKeysResponse } from '@shared/types/apiAgent'
-import { useAsyncState } from '@vueuse/core'
-import { computed, ref, toRaw } from 'vue'
+import type { PgpKeysResponse, PgpKeyUser } from '@shared/types/apiAgent'
+import { createReusableTemplate, useAsyncState } from '@vueuse/core'
+import { computed, h, ref, toRaw } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -16,6 +16,7 @@ import {
 import { injectConfirmModal } from '@/composables/useConfirmModal'
 import ContextMenu from '@/pages/Keys/ContextMenu.vue'
 import CreateDialog from '@/pages/Keys/CreateDialog.vue'
+import KeyModalBody from '@/pages/Keys/KeyModalBody.vue'
 import { apiAgent } from '@/rpcChild'
 
 const modal = injectConfirmModal()
@@ -103,12 +104,15 @@ const onImport = async () => {
   const { path: filePath } = files[0]
 
   try {
-    const importedKeys = await apiAgent.importKey(filePath)
+    const { parsedCount, imported } = await apiAgent.importKey(filePath)
 
     void modal.open({
       icon: 'success',
-      title: 'Import successful',
-      content: importedKeys.map((key) => `${key.name} <${key.email}> (${key.key_id})`).join('\n'),
+      title: 'Key(s) imported',
+      content: h(KeyModalBody, {
+        description: `${parsedCount} keys ware parsed, ${imported.length} imported.`,
+        keyInfos: imported,
+      }),
       cancelText: false,
     })
 
@@ -158,9 +162,7 @@ const onExport = async (e?: PointerEvent) => {
     void modal.open({
       icon: 'success',
       title: 'Export public key(s) successful',
-      content: selectedKeys.value
-        .map((key) => `${key.name} <${key.email}> (${key.key_id})`)
-        .join('\n'),
+      content: h(KeyModalBody, { keyInfos: selectedKeys.value }),
       cancelText: false,
     })
   } catch (err) {

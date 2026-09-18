@@ -3,7 +3,7 @@ import path from 'node:path'
 import stream from 'node:stream'
 
 import { serialize } from '@mikro-orm/core'
-import type { ApiAgentApis, ApiAgentEvents } from '@shared/types/apiAgent'
+import type { ApiAgentApis, ApiAgentEvents, PgpKeyUser } from '@shared/types/apiAgent'
 import { createTrigger } from '@shared/utility-bridger/electron/child'
 import { ZipArchive } from 'archiver'
 import * as openpgp from 'openpgp'
@@ -130,6 +130,7 @@ export const pgpHandlers: ApiAgentApis = {
 
     const rawStr = fs.readFileSync(filePath, 'utf8')
 
+    // parse key file
     // 兩種情況:
     // 單一 armored block 內含多把 keys
     // 多個 armored block
@@ -173,18 +174,42 @@ export const pgpHandlers: ApiAgentApis = {
       }),
     )
 
-    const em = db.em.fork()
-    keyInfos.forEach((key) => {
-      em.create(db!.PgpKey, key)
-    })
+    // write to db
+    const results = await Promise.all<PgpKeyUser & { error?: string }>(
+      keyInfos.map(async (keyInfo) => {
+        try {
+          const em = db!.em.fork()
+          em.create(db!.PgpKey, keyInfo)
+          await em.flush()
 
-    await em.flush()
+          return {
+            key_id: keyInfo.key_id,
+            name: keyInfo.name,
+            email: keyInfo.email,
+          }
+        } catch (err) {
+          const error = err as Error
+          const errorNameMap: Record<string, string> = {
+            UniqueConstraintViolationException: 'KEY_EXISTS',
+          }
 
-    return keyInfos.map((key) => ({
-      key_id: key.key_id,
-      name: key.name,
-      email: key.email,
-    }))
+          return {
+            error: errorNameMap[error.name] || error.name,
+            key_id: keyInfo.key_id,
+            name: keyInfo.name,
+            email: keyInfo.email,
+          }
+        }
+      }),
+    )
+
+    const grouped = Object.groupBy(results, (item) => (item.error ? 'failed' : 'success'))
+
+    return {
+      parsedCount: keyInfos.length,
+      imported: grouped.success || [],
+      failed: grouped.failed || [],
+    }
   },
   async encrypt(filePaths, pubkeyIds: string[]) {
     if (!db) throw new Error('DB_NOT_READY')

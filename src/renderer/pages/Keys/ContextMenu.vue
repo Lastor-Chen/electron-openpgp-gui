@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PgpKeysResponse } from '@shared/types/apiAgent'
+import { h } from 'vue'
 
 import {
   ContextMenu,
@@ -8,6 +9,7 @@ import {
   ContextMenuTrigger,
 } from '@/components/ui/context-menu'
 import { injectConfirmModal } from '@/composables/useConfirmModal'
+import KeyModalBody from '@/pages/Keys/KeyModalBody.vue'
 import { apiAgent } from '@/rpcChild'
 
 const props = defineProps<{
@@ -27,14 +29,14 @@ const onDelete = async () => {
   const keyInfos: string[] = []
   const keyIds: string[] = []
   props.selected.forEach((row) => {
-    keyInfos.push(`${row.name} <${row.email}> (${row.key_id})`)
+    keyInfos.push(`${row.name} <${row.email}> (${row.key_id.toUpperCase()})`)
     keyIds.push(row.key_id)
   })
 
   const isConfirmed = await modal.open({
     icon: 'warn',
     title: 'Delete key(s)',
-    content: keyInfos.join('\n'),
+    content: h(KeyModalBody, { keyInfos: props.selected }),
     confirmText: 'Delete',
     cancelText: true,
   })

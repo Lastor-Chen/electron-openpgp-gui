@@ -5,7 +5,11 @@ export type ApiAgentApis = {
   getPgpKeys(): Promise<PgpKeysResponse>
   deleteKey(keyIds: string[]): Promise<void>
   exportKeys(keyIds: string[], outputPath: string): Promise<void>
-  importKey(filePath: string): Promise<Pick<TPgpKey, 'key_id' | 'name' | 'email'>[]>
+  importKey(filePath: string): Promise<{
+    parsedCount: number
+    imported: PgpKeyUser[]
+    failed: (PgpKeyUser & { error?: string })[]
+  }>
   encrypt(filePaths: string[], pubkeyIds: string[]): void
   decrypt(filePath: string): void
 }
@@ -24,3 +28,5 @@ export type TPgpKey = {
 }
 
 export type PgpKeysResponse = TPgpKey[]
+
+export type PgpKeyUser = Pick<TPgpKey, 'key_id' | 'name' | 'email'>
