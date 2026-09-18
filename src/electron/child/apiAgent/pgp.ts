@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import stream from 'node:stream'
 
-import { serialize } from '@mikro-orm/core'
+import { serialize, wrap } from '@mikro-orm/core'
 import type { ApiAgentApis, ApiAgentEvents, PgpKeyUser } from '@shared/types/apiAgent'
 import { createTrigger } from '@shared/utility-bridger/electron/child'
 import { ZipArchive } from 'archiver'
@@ -125,17 +125,20 @@ export const pgpHandlers: ApiAgentApis = {
     const armored = openpgp.armor(openpgp.enums.armor.publicKey, packetList.write())
     fs.writeFileSync(outputPath, armored, 'utf8')
   },
+  /**
+   * key file 已知三種情況:
+   * 一個 armored block, 包含多把 keys
+   * 多個 armored block
+   * 多個 armored block, 且同時存在同一把 key 的公、私鑰
+   */
   async importKey(filePath: string) {
     if (!db) throw new Error('DB_NOT_READY')
 
-    const rawStr = fs.readFileSync(filePath, 'utf8')
+    const rawArmored = fs.readFileSync(filePath, 'utf8')
 
     // parse key file
-    // 兩種情況:
-    // 單一 armored block 內含多把 keys
-    // 多個 armored block
     const splitArmoredKeys =
-      rawStr.match(
+      rawArmored.match(
         /-----BEGIN PGP (PUBLIC|PRIVATE) KEY BLOCK-----[\s\S]+?-----END PGP \1 KEY BLOCK-----/g,
       ) || []
 
@@ -146,7 +149,7 @@ export const pgpHandlers: ApiAgentApis = {
       )
       keys = keysArr.flat()
     } else {
-      keys = await openpgp.readKeys({ armoredKeys: rawStr })
+      keys = await openpgp.readKeys({ armoredKeys: rawArmored })
     }
 
     const keyInfos = await Promise.all(
@@ -174,12 +177,39 @@ export const pgpHandlers: ApiAgentApis = {
       }),
     )
 
+    // 合併同一把 key 的公、私鑰 obj
+    const mergedMap = keyInfos.reduce((map, key) => {
+      const existing = map.get(key.key_id)
+      if (!existing) {
+        map.set(key.key_id, key)
+      } else if (key.private_key) {
+        existing.private_key = key.private_key
+      }
+      return map
+    }, new Map<string, (typeof keyInfos)[number]>())
+
+    const mergedKeyInfos = [...mergedMap.values()]
+
     // write to db
     const results = await Promise.all<PgpKeyUser & { error?: string }>(
-      keyInfos.map(async (keyInfo) => {
+      mergedKeyInfos.map(async (keyInfo) => {
         try {
           const em = db!.em.fork()
-          em.create(db!.PgpKey, keyInfo)
+
+          // input 有私鑰, db 已有公鑰無私鑰, 則 update
+          // 其餘直接 create
+          if (keyInfo.private_key) {
+            const pgpKey = await em.findOne(db!.PgpKey, { key_id: keyInfo.key_id })
+            if (!pgpKey) {
+              em.create(db!.PgpKey, keyInfo)
+            } else if (!pgpKey.private_key) {
+              em.assign(pgpKey, {})
+              wrap(pgpKey).assign({ private_key: keyInfo.private_key })
+            }
+          } else {
+            em.create(db!.PgpKey, keyInfo)
+          }
+
           await em.flush()
 
           return {
