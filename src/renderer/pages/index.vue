@@ -3,7 +3,7 @@ import Navbar from '@/pages/Navbar.vue'
 </script>
 
 <template>
-  <div>
+  <div class="grid grid-rows-[auto_1fr] min-h-screen">
     <header>
       <Navbar />
     </header>

@@ -24,4 +24,15 @@ export function setupIpcMain() {
       dirname: path.dirname(filePath),
     }))
   })
+
+  ipcMainHandle('saveFileBrowser', async (_, opts) => {
+    const { canceled, filePath } = await dialog.showSaveDialog(opts)
+    if (canceled) return
+
+    return {
+      path: filePath,
+      basename: path.basename(filePath),
+      dirname: path.dirname(filePath),
+    }
+  })
 }

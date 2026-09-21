@@ -4,6 +4,10 @@ import { onMounted, onScopeDispose } from 'vue'
 import Index from '@/pages/index.vue'
 import { apiAgent } from '@/rpcChild'
 
+import { useConfirmModal } from './composables/useConfirmModal'
+
+const [, GlobalModal] = useConfirmModal({ provide: true })
+
 apiAgent.initDb().catch((err: Error) => {
   if (err.message.includes('NO_DB_DIR')) {
     window.alert(String(err))
@@ -26,4 +30,5 @@ onMounted(() => {
 
 <template>
   <Index />
+  <GlobalModal />
 </template>

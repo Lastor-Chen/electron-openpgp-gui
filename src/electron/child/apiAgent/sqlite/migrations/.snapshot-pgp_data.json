@@ -4,8 +4,8 @@
     {
       "name": "pgp_key",
       "columns": {
-        "creation_time": {
-          "name": "creation_time",
+        "created": {
+          "name": "created",
           "type": "date",
           "unsigned": false,
           "autoincrement": false,
@@ -55,8 +55,8 @@
           "enumItems": [],
           "mappedType": "text"
         },
-        "expiration_time": {
-          "name": "expiration_time",
+        "expires": {
+          "name": "expires",
           "type": "date",
           "unsigned": false,
           "autoincrement": false,
@@ -88,23 +88,6 @@
           "collation": null,
           "enumItems": [],
           "mappedType": "text"
-        },
-        "is_owner": {
-          "name": "is_owner",
-          "type": "integer",
-          "unsigned": false,
-          "autoincrement": false,
-          "primary": false,
-          "nullable": false,
-          "unique": false,
-          "length": null,
-          "precision": null,
-          "scale": null,
-          "default": null,
-          "comment": null,
-          "collation": null,
-          "enumItems": [],
-          "mappedType": "integer"
         },
         "key_id": {
           "name": "key_id",

@@ -8,6 +8,7 @@ bridgeRpcChild()
 contextBridge.exposeInMainWorld('appInfo', {
   version: import.meta.env.VITE_APP_VERSION,
   env: import.meta.env.NODE_ENV,
+  platform: process.platform,
 } satisfies AppInfo)
 
 contextBridge.exposeInMainWorld('ipcRenderer', {
