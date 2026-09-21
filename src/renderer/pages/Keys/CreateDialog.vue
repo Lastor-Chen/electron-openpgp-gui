@@ -32,7 +32,6 @@ watch(open, (isOpen) => {
 
 const name = ref<string>()
 const email = ref<string>()
-const canSubmit = computed(() => Boolean(email.value))
 
 const invalidStyle = 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500/30'
 const errMsg = ref('')
@@ -96,7 +95,7 @@ const genKey = async () => {
       <DialogHeader>
         <DialogTitle>Create new key pair</DialogTitle>
       </DialogHeader>
-      <div class="space-y-4">
+      <div class="space-y-4" @keyup.enter="() => validate()">
         <Input v-model="name" type="text" placeholder="name" />
         <Input
           v-model="email"
@@ -113,7 +112,7 @@ const genKey = async () => {
         <DialogClose as-child>
           <Button variant="outline" size="sm">Cancel</Button>
         </DialogClose>
-        <Button size="sm" :disabled="!canSubmit" @click="validate">Create</Button>
+        <Button size="sm" @click="() => validate()">Create</Button>
       </DialogFooter>
     </DialogContent>
   </Dialog>
