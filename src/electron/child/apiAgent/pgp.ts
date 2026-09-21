@@ -99,7 +99,7 @@ export const pgpHandlers: ApiAgentApis = {
     const em = db.em.fork()
     await em.nativeDelete(db.PgpKey, { key_id: keyIds })
   },
-  async exportKeys(keyIds, outputPath) {
+  async exportKeys(keyIds, outputPath, includePrivate) {
     if (!db) throw new Error('DB_NOT_READY')
 
     const em = db.em.fork()
@@ -110,18 +110,32 @@ export const pgpHandlers: ApiAgentApis = {
 
     // 合併成一個 armored block string
     // https://github.com/openpgpjs/openpgpjs/issues/466
-    const packetList = new openpgp.PacketList()
     const pgpKeys = await Promise.all(
       keyRows.map((row) => {
-        return openpgp.readKey({ armoredKey: row.public_key })
+        const armoredKey = includePrivate && row.private_key ? row.private_key : row.public_key
+        return openpgp.readKey({ armoredKey })
       }),
     )
 
+    const packetList = new openpgp.PacketList()
+    const privPacketList = new openpgp.PacketList()
     for (const key of pgpKeys) {
-      key.toPacketList().forEach((packet) => packetList.push(packet))
+      key
+        .toPublic()
+        .toPacketList()
+        .forEach((packet) => packetList.push(packet))
+
+      if (key.isPrivate()) {
+        key.toPacketList().forEach((packet) => privPacketList.push(packet))
+      }
     }
 
-    const armored = openpgp.armor(openpgp.enums.armor.publicKey, packetList.write())
+    let armored = openpgp.armor(openpgp.enums.armor.publicKey, packetList.write())
+    if (includePrivate && privPacketList.length) {
+      const privArmored = openpgp.armor(openpgp.enums.armor.privateKey, privPacketList.write())
+      armored += privArmored
+    }
+
     fs.writeFileSync(outputPath, armored, 'utf8')
   },
   /**

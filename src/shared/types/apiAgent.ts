@@ -4,7 +4,7 @@ export type ApiAgentApis = {
   generateKey(opts: { name?: string; email?: string }): Promise<void>
   getPgpKeys(): Promise<PgpKeysResponse>
   deleteKey(keyIds: string[]): Promise<void>
-  exportKeys(keyIds: string[], outputPath: string): Promise<void>
+  exportKeys(keyIds: string[], outputPath: string, includePrivate?: boolean): Promise<void>
   importKey(filePath: string): Promise<{
     parsedCount: number
     imported: PgpKeyUser[]

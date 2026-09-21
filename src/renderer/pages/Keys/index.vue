@@ -136,8 +136,17 @@ const onExport = async (e?: PointerEvent) => {
       icon: 'warn',
       title: 'Export key(s)',
       content: 'Please select key(s) first.',
-      confirmText: 'OK',
       cancelText: false,
+    })
+  }
+
+  let includePrivate = false
+  if (selectedKeys.value.some((key) => key.has_private)) {
+    includePrivate = await modal.open({
+      icon: 'info',
+      title: 'Include private key(s)?',
+      confirmText: 'Yes',
+      cancelText: 'No',
     })
   }
 
@@ -157,7 +166,7 @@ const onExport = async (e?: PointerEvent) => {
   if (!file) return
 
   try {
-    await apiAgent.exportKeys([...selectedKeyIds.value], file.path)
+    await apiAgent.exportKeys([...selectedKeyIds.value], file.path, includePrivate)
 
     void modal.open({
       icon: 'success',
