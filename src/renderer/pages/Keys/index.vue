@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { Check } from '@lucide/vue'
-import type { PgpKeysResponse, PgpKeyUser } from '@shared/types/apiAgent'
-import { createReusableTemplate, useAsyncState } from '@vueuse/core'
+import { Check, XIcon } from '@lucide/vue'
+import type { PgpKeysResponse } from '@shared/types/apiAgent'
+import { useAsyncState } from '@vueuse/core'
 import { computed, h, ref, toRaw } from 'vue'
 
 import { Button } from '@/components/ui/button'
+import {
+  InputGroup,
+  InputGroupInput,
+  InputGroupAddon,
+  InputGroupButton,
+} from '@/components/ui/input-group'
 import {
   Table,
   TableHeader,
@@ -41,6 +47,17 @@ const {
 } = useAsyncState(async () => {
   return await apiAgent.getPgpKeys()
 }, [])
+
+const search = ref('')
+const filteredKeys = computed(() =>
+  keys.value.filter((key) => {
+    return (
+      key.name?.toLowerCase().includes(search.value.toLowerCase()) ||
+      key.email?.toLowerCase().includes(search.value.toLowerCase()) ||
+      key.key_id?.toLowerCase().includes(search.value.toLowerCase())
+    )
+  }),
+)
 
 const formatFingerprint = (val = '') => {
   return val
@@ -188,10 +205,27 @@ const onExport = async (e?: PointerEvent) => {
 
 <template>
   <div class="h-full px-4 pt-4" @click="unSelectAll">
-    <div class="mb-4 space-x-2">
-      <CreateDialog @created="getPgpKeys()" />
-      <Button variant="outline" @click="onImport">Import</Button>
-      <Button variant="outline" @click="(e: PointerEvent) => onExport(e)">Export</Button>
+    <div class="mb-4 flex justify-between">
+      <div class="space-x-2">
+        <CreateDialog @created="getPgpKeys()" />
+        <Button variant="outline" @click="onImport">Import</Button>
+        <Button variant="outline" @click="(e: PointerEvent) => onExport(e)">Export</Button>
+      </div>
+      <div class="w-[30%]">
+        <InputGroup>
+          <InputGroupInput
+            v-model="search"
+            type="text"
+            placeholder="Filter"
+            @keyup.esc="search = ''"
+          />
+          <InputGroupAddon align="inline-end">
+            <InputGroupButton v-show="search" size="icon-xs" @click="search = ''">
+              <XIcon />
+            </InputGroupButton>
+          </InputGroupAddon>
+        </InputGroup>
+      </div>
     </div>
 
     <Table wrapper-class="border rounded max-h-[335px]" class="table-fixed select-none">
@@ -207,7 +241,7 @@ const onExport = async (e?: PointerEvent) => {
       <ContextMenu :selected="selectedKeys" @data-changed="getPgpKeys()" @export="() => onExport()">
         <TableBody>
           <TableRow
-            v-for="(row, index) in keys"
+            v-for="(row, index) in filteredKeys"
             :key="row.key_id"
             class="hover:bg-muted"
             :class="{ 'bg-blue-300!': selectedKeyIds.has(row.key_id) }"
