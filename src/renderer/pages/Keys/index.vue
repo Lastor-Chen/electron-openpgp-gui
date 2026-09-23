@@ -80,7 +80,7 @@ const formatDate = (iso?: string | null) => {
 const onSelectRow = (event: MouseEvent, rowId: string, rowIndex: number) => {
   event.stopPropagation()
 
-  const toggleKey = window.appInfo.platform === 'win32' ? 'ctrlKey' : 'metaKey'
+  const toggleKey = window.electronApi.appInfo.platform === 'win32' ? 'ctrlKey' : 'metaKey'
 
   if (event[toggleKey]) {
     // ctrl/cmd click, toggle selection

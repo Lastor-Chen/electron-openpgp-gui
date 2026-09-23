@@ -1,15 +1,9 @@
-import type { AppInfo } from '@shared/types/global'
+import type { ElectronApi } from '@shared/types/global'
 import { bridgeRpcChild } from '@utility-bridger/electron/preload'
-import { contextBridge, ipcRenderer } from 'electron'
+import { contextBridge, ipcRenderer, webUtils } from 'electron'
 import type { IpcRendererEvent } from 'electron'
 
 bridgeRpcChild()
-
-contextBridge.exposeInMainWorld('appInfo', {
-  version: import.meta.env.VITE_APP_VERSION,
-  env: import.meta.env.NODE_ENV,
-  platform: process.platform,
-} satisfies AppInfo)
 
 contextBridge.exposeInMainWorld('ipcRenderer', {
   on(channel: string, listener: (...args: unknown[]) => void) {
@@ -24,3 +18,14 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
     return ipcRenderer.invoke(channel, ...args)
   },
 })
+
+contextBridge.exposeInMainWorld('electronApi', {
+  appInfo: {
+    version: import.meta.env.VITE_APP_VERSION,
+    env: import.meta.env.NODE_ENV,
+    platform: process.platform,
+  },
+  getPathForFile(file: File) {
+    return webUtils.getPathForFile(file)
+  },
+} satisfies ElectronApi)

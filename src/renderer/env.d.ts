@@ -1,9 +1,9 @@
-import type { CustomImportMetaEnv, AppInfo, IpcRendererApis } from '@shared/types/global'
+import type { CustomImportMetaEnv, IpcRendererApis, ElectronApi } from '@shared/types/global'
 
 declare global {
   interface Window {
-    appInfo: AppInfo
     ipcRenderer: IpcRendererApis
+    electronApi: ElectronApi
   }
 
   interface ImportMetaEnv extends CustomImportMetaEnv {}

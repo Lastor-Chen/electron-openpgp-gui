@@ -3,10 +3,13 @@ export interface CustomImportMetaEnv {
   readonly NODE_ENV: string
 }
 
-export interface AppInfo {
-  version: string
-  env: string
-  platform: string
+export type ElectronApi = {
+  appInfo: {
+    version: string
+    env: string
+    platform: string
+  }
+  getPathForFile(file: File): string
 }
 
 export type IpcMainApis = {
@@ -18,6 +21,7 @@ export type IpcMainApis = {
     defaultPath?: string
     filters?: { name: string; extensions: string[] }[]
   }): { path: string; basename: string; dirname: string } | undefined
+  openFileManager(filePath: string): void
 }
 
 export type IpcMainEvents = {

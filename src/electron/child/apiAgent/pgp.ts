@@ -19,6 +19,8 @@ const dbDir = dbDirArg?.split('=')[1]
 const dbPath = dbDir ? path.join(dbDir, 'pgp_data') : undefined
 let db: OrmClient | undefined
 
+let abortController: AbortController | undefined
+
 export const pgpHandlers: ApiAgentApis = {
   async initDb() {
     if (db) return dbPath // 確保只執行 1 次
@@ -307,7 +309,8 @@ export const pgpHandlers: ApiAgentApis = {
       const dir = path.dirname(filePaths[0]!)
       output = renameIfExisted(path.join(dir, 'Encrypted.zip.pgp'))
     } else {
-      output = renameIfExisted(`${filePaths[0]}.zip.pgp`)
+      const parsed = path.parse(filePaths[0]!)
+      output = renameIfExisted(path.join(parsed.dir, `${parsed.name}.zip.pgp`))
     }
 
     const writable = fs.createWriteStream(output)
@@ -319,12 +322,30 @@ export const pgpHandlers: ApiAgentApis = {
       },
     })
 
-    await stream.promises.pipeline(
-      encryptStream,
-      // node24 pipeline 可以混 stream, 但 @types/node 要 v26 才跟上
-      stream.Transform.fromWeb(progressStream),
-      writable,
-    )
+    abortController = new AbortController()
+    try {
+      await stream.promises.pipeline(
+        encryptStream,
+        // node24 pipeline 可以混 stream, 但 @types/node 要 v26 才跟上
+        stream.Transform.fromWeb(progressStream),
+        writable,
+        { signal: abortController.signal },
+      )
+    } catch (err) {
+      if (String(err).includes('AbortError')) {
+        fs.rmSync(output, { force: true })
+      }
+
+      throw err
+    }
+
+    return {
+      path: output,
+      name: path.basename(output),
+    }
+  },
+  abortEncrypt() {
+    abortController?.abort()
   },
   async decrypt(filePath: string) {
     if (!db) throw new Error('DB_NOT_READY')
