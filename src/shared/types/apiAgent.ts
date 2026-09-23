@@ -11,6 +11,7 @@ export type ApiAgentApis = {
     failed: (PgpKeyUser & { error?: string })[]
   }>
   encrypt(filePaths: string[], pubkeyIds: string[]): Promise<{ path: string; name: string }>
+  abortEncrypt(): void
   decrypt(filePath: string): void
 }
 

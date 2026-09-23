@@ -65,6 +65,10 @@ const encrypt = async () => {
     open.value = false
   }
 }
+
+const cancel = () => {
+  void apiAgent.abortEncrypt()
+}
 </script>
 
 <template>
@@ -88,7 +92,7 @@ const encrypt = async () => {
 
       <DialogFooter>
         <DialogClose as-child>
-          <Button variant="outline" size="sm">Cancel</Button>
+          <Button variant="outline" size="sm" @click="cancel">Cancel</Button>
         </DialogClose>
       </DialogFooter>
     </DialogContent>
