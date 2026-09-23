@@ -347,6 +347,25 @@ export const pgpHandlers: ApiAgentApis = {
   abortEncrypt() {
     abortController?.abort()
   },
+  async readEncryptFileInfo(filePath: string) {
+    if (!db) throw new Error('DB_NOT_READY')
+
+    const readable = fs.createReadStream(filePath)
+    const message = await openpgp.readMessage({ binaryMessage: stream.Readable.toWeb(readable) })
+
+    const encKeyIds = message.getEncryptionKeyIDs().map((keyId) => keyId.toHex())
+
+    const em = db.em.fork()
+    const res = await em.find(
+      db.PgpKey,
+      { encryption_key_id: { $in: encKeyIds } },
+      {
+        fields: ['name', 'email'],
+      },
+    )
+
+    return serialize(res)
+  },
   async decrypt(filePath: string) {
     if (!db) throw new Error('DB_NOT_READY')
 
