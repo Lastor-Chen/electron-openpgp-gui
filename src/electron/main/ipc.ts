@@ -1,7 +1,7 @@
 import path from 'node:path'
 
 import type { IpcMainApis } from '@shared/types/global'
-import { ipcMain, dialog } from 'electron'
+import { ipcMain, dialog, shell } from 'electron'
 
 function ipcMainHandle<K extends keyof IpcMainApis>(
   channel: K,
@@ -34,5 +34,9 @@ export function setupIpcMain() {
       basename: path.basename(filePath),
       dirname: path.dirname(filePath),
     }
+  })
+
+  ipcMainHandle('openFileManager', (_, filePath) => {
+    shell.showItemInFolder(filePath)
   })
 }

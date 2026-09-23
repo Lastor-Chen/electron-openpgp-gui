@@ -35,7 +35,7 @@ export function createProgressStream(
   return new webStream.TransformStream<Uint8Array>({
     transform(chunk, controller) {
       countBytes += chunk.byteLength
-      const percent = Math.floor((countBytes / totalBytes) * 100)
+      const percent = Math.min(100, Math.floor((countBytes / totalBytes) * 100))
       if (percent !== prevPercent) {
         options?.onTransform?.(percent, chunk)
         prevPercent = percent

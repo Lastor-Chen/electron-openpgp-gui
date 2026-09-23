@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { XIcon, FileUpIcon } from '@lucide/vue'
 import { useAsyncState, useDropZone } from '@vueuse/core'
-import { computed, ref, toRaw, useTemplateRef } from 'vue'
+import { ref, useTemplateRef } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -11,18 +11,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { apiAgentRef } from '@/composables/useChildRef'
+import EncryptButton from '@/pages/Encrypt/EncryptButton.vue'
 import { apiAgent } from '@/rpcChild'
 
 const selectedKeyIds = ref<string[]>([])
-const progress = apiAgentRef('progress', { initValue: 0 })
 
 const selectFiles = ref<string[]>([])
 const dropZone = useTemplateRef('dropZone')
-
-const canSubmit = computed(() => {
-  return selectFiles.value.length && selectedKeyIds.value.length
-})
 
 const { state: pgpKeys } = useAsyncState(
   async () => {
@@ -55,12 +50,9 @@ const browserFiles = async () => {
   selectFiles.value = files.map((file) => file.path)
 }
 
-const submit = async () => {
-  if (!canSubmit.value) return
-
-  await apiAgent.encrypt(toRaw(selectFiles.value), toRaw(selectedKeyIds.value))
-
-  window.alert('Encryption successful')
+const clearSelected = () => {
+  selectedKeyIds.value = []
+  selectFiles.value = []
 }
 </script>
 
@@ -128,7 +120,7 @@ const submit = async () => {
     </div>
 
     <div class="mt-8">
-      <Button :disabled="!canSubmit" @click="submit">Encrypt</Button>
+      <EncryptButton :files="selectFiles" :key-ids="selectedKeyIds" @success="clearSelected" />
     </div>
   </div>
 </template>

@@ -307,7 +307,8 @@ export const pgpHandlers: ApiAgentApis = {
       const dir = path.dirname(filePaths[0]!)
       output = renameIfExisted(path.join(dir, 'Encrypted.zip.pgp'))
     } else {
-      output = renameIfExisted(`${filePaths[0]}.zip.pgp`)
+      const parsed = path.parse(filePaths[0]!)
+      output = renameIfExisted(path.join(parsed.dir, `${parsed.name}.zip.pgp`))
     }
 
     const writable = fs.createWriteStream(output)
@@ -325,6 +326,11 @@ export const pgpHandlers: ApiAgentApis = {
       stream.Transform.fromWeb(progressStream),
       writable,
     )
+
+    return {
+      path: output,
+      name: path.basename(output),
+    }
   },
   async decrypt(filePath: string) {
     if (!db) throw new Error('DB_NOT_READY')

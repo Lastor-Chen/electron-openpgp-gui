@@ -21,6 +21,7 @@ export type IpcMainApis = {
     defaultPath?: string
     filters?: { name: string; extensions: string[] }[]
   }): { path: string; basename: string; dirname: string } | undefined
+  openFileManager(filePath: string): void
 }
 
 export type IpcMainEvents = {
