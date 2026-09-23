@@ -59,7 +59,7 @@ const clearSelected = () => {
 <template>
   <div class="h-full px-4 pt-4">
     <div>
-      <h3 class="mb-2 flex justify-between items-center">Encrypt Files</h3>
+      <h3 class="mb-2">Encrypt Files</h3>
       <div
         ref="dropZone"
         class="h-41 w-210.75 border border-dashed rounded-md px-4 py-2 overflow-auto scrollbar-gutter-stable"
@@ -99,7 +99,7 @@ const clearSelected = () => {
       </div>
     </div>
 
-    <div class="mt-2">
+    <div class="mt-4">
       <h3 class="mb-2">Recipients</h3>
       <Select v-model="selectedKeyIds" multiple>
         <SelectTrigger class="w-full">

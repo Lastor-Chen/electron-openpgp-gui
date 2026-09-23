@@ -12,6 +12,10 @@ export type ApiAgentApis = {
   }>
   encrypt(filePaths: string[], pubkeyIds: string[]): Promise<{ path: string; name: string }>
   abortEncrypt(): void
+  readEncryptFileInfo(filePath: string): Promise<{
+    encryptedKeys: PgpKeyUser[]
+    unknowns: number
+  }>
   decrypt(filePath: string): void
 }
 
