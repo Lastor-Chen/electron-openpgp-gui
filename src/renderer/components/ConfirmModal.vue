@@ -72,13 +72,13 @@ defineExpose({
           <InfoIcon class="size-8 text-blue-400" v-else />
           {{ config?.title }}
         </AlertDialogTitle>
-        <AlertDialogDescription>
+        <AlertDialogDescription as="div">
           <template v-if="isComponent(config?.content)">
             <component :is="config.content" />
           </template>
-          <span v-else-if="config?.content" class="wrap-anywhere whitespace-pre-wrap">
+          <p v-else-if="config?.content" class="wrap-anywhere whitespace-pre-wrap">
             {{ config.content }}
-          </span>
+          </p>
           <slot v-else :name="config?.slot || 'default'" />
         </AlertDialogDescription>
       </AlertDialogHeader>
