@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Check, XIcon } from '@lucide/vue'
-import type { PgpKeysResponse } from '@shared/types/apiAgent'
+import type { TPgpKey } from '@shared/types/apiAgent'
 import { useAsyncState } from '@vueuse/core'
-import { computed, h, ref, toRaw } from 'vue'
+import { computed, h, ref } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -27,18 +27,12 @@ import { apiAgent } from '@/rpcChild'
 
 const modal = injectConfirmModal()
 
-const contextTarget = ref<PgpKeysResponse[number]>()
 const selectedKeyIds = ref<Set<string>>(new Set())
-const anchorIndex = ref<number>()
-
-const selectedKeys = computed(() => {
-  if (selectedKeyIds.value.size) {
-    return keys.value.filter((key) => selectedKeyIds.value.has(key.key_id))
-  } else if (contextTarget.value) {
-    return [toRaw(contextTarget.value)]
-  }
-  return []
+const selectedKeys = computed<TPgpKey[]>(() => {
+  return keys.value.filter((key) => selectedKeyIds.value.has(key.key_id))
 })
+
+const anchorIndex = ref<number>()
 
 const {
   state: keys,
@@ -102,6 +96,12 @@ const onSelectRow = (event: MouseEvent, rowId: string, rowIndex: number) => {
   } else {
     selectedKeyIds.value = new Set([rowId])
     anchorIndex.value = rowIndex
+  }
+}
+
+const onContextmenu = (rowId: string) => {
+  if (!selectedKeyIds.value.has(rowId)) {
+    selectedKeyIds.value = new Set([rowId])
   }
 }
 
@@ -245,7 +245,7 @@ const onExport = async (e?: PointerEvent) => {
             :key="row.key_id"
             class="hover:bg-muted"
             :class="{ 'bg-blue-300!': selectedKeyIds.has(row.key_id) }"
-            @contextmenu="contextTarget = row"
+            @contextmenu="() => onContextmenu(row.key_id)"
             @click="(e: MouseEvent) => onSelectRow(e, row.key_id, index)"
           >
             <TableCell>
