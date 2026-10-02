@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { XIcon } from '@lucide/vue'
 import type { PgpKeyUser } from '@shared/types/apiAgent'
-import { ref } from 'vue'
+import { useDropZone } from '@vueuse/core'
+import { ref, useTemplateRef } from 'vue'
 
 import PgpKeyUserList from '@/components/PgpKeyUserList.vue'
 import ProgressButton from '@/components/ProgressButton.vue'
@@ -18,6 +19,20 @@ import { apiAgent } from '@/rpcChild'
 
 const modal = injectConfirmModal()
 
+const dropZone = useTemplateRef('dropZone')
+useDropZone(dropZone, {
+  multiple: false,
+  onDrop(files) {
+    const file = files?.[0]
+    if (!file) return
+
+    const filePath = window.electronApi.getPathForFile(file)
+
+    selectedFile.value = filePath
+    void readFileInfo(filePath)
+  },
+})
+
 const selectedFile = ref('')
 const fileInfo = ref<{
   recipients: PgpKeyUser[]
@@ -32,11 +47,19 @@ const onChooseFile = async () => {
   if (!files || !files[0]) return
 
   selectedFile.value = files[0].path
-  const { encryptedKeys, unknowns } = await apiAgent.readEncryptFileInfo(files[0].path)
+  void readFileInfo(files[0].path)
+}
 
-  fileInfo.value = {
-    recipients: encryptedKeys,
-    unknownCount: unknowns,
+const readFileInfo = async (file: string) => {
+  try {
+    const { encryptedKeys, unknowns } = await apiAgent.readEncryptFileInfo(file)
+
+    fileInfo.value = {
+      recipients: encryptedKeys,
+      unknownCount: unknowns,
+    }
+  } catch (err) {
+    // TODO
   }
 }
 
@@ -78,7 +101,7 @@ const onCancel = () => {
 </script>
 
 <template>
-  <div class="h-full px-4 pt-4">
+  <div ref="dropZone" class="h-full px-4 pt-4">
     <h3 class="mb-2">Decrypt File</h3>
     <ButtonGroup class="w-full">
       <Button variant="outline" @click="onChooseFile">Choose</Button>
