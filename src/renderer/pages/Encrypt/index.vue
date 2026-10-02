@@ -141,21 +141,32 @@ const onCancel = () => {
 
     <div class="mt-4">
       <h3 class="mb-2">Recipients</h3>
-      <Select v-model="selectedKeyIds" multiple>
-        <SelectTrigger class="w-full">
-          <SelectValue v-if="selectedKeyIds.length">
-            {{ selectedKeyIds.length }} selected
-          </SelectValue>
-          <SelectValue v-else>Select recipients...</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem v-for="key in pgpKeys" :key="key.key_id" :value="key.key_id">
-            {{ key.name }}
-            {{ key.email ? `<${key.email}>` : '' }}
-            ({{ key.key_id }})
-          </SelectItem>
-        </SelectContent>
-      </Select>
+      <div class="relative">
+        <Select v-model="selectedKeyIds" multiple>
+          <SelectTrigger class="w-full">
+            <SelectValue v-if="selectedKeyIds.length">
+              {{ selectedKeyIds.length }} selected
+            </SelectValue>
+            <SelectValue v-else>Select recipients...</SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="key in pgpKeys" :key="key.key_id" :value="key.key_id">
+              {{ key.name }}
+              {{ key.email ? `<${key.email}>` : '' }}
+              ({{ key.key_id }})
+            </SelectItem>
+          </SelectContent>
+        </Select>
+        <Button
+          v-show="selectedKeyIds.length"
+          variant="ghost"
+          size="icon-xs"
+          class="absolute top-1/2 -translate-y-1/2 right-8"
+          @click="selectedKeyIds = []"
+        >
+          <XIcon class="cursor-pointer size-4 text-muted-foreground opacity-50" />
+        </Button>
+      </div>
     </div>
 
     <div class="mt-8">
