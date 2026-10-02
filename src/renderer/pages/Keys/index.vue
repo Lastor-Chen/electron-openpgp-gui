@@ -231,7 +231,7 @@ const onExport = async (e?: PointerEvent) => {
     <Table wrapper-class="border rounded max-h-[335px]" class="table-fixed select-none">
       <TableHeader>
         <TableRow class="sticky top-0 z-1 bg-gray-100">
-          <TableHead class="w-8/100">Private</TableHead>
+          <TableHead class="w-8/100">Secret</TableHead>
           <TableHead class="w-18/100">Name</TableHead>
           <TableHead class="w-25/100">Email</TableHead>
           <TableHead class="w-15/100">Expires</TableHead>

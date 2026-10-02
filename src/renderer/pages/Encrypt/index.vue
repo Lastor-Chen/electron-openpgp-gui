@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { XIcon, FileUpIcon } from '@lucide/vue'
 import { useAsyncState, useDropZone } from '@vueuse/core'
-import { ref, useTemplateRef } from 'vue'
+import { ref, useTemplateRef, toRaw, computed } from 'vue'
 
+import ProgressButton from '@/components/ProgressButton.vue'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -11,21 +12,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import EncryptButton from '@/pages/Encrypt/EncryptButton.vue'
+import { injectConfirmModal } from '@/composables/useConfirmModal'
 import { apiAgent } from '@/rpcChild'
 
+const modal = injectConfirmModal()
+
 const selectedKeyIds = ref<string[]>([])
-
 const selectFiles = ref<string[]>([])
-const dropZone = useTemplateRef('dropZone')
 
-const { state: pgpKeys } = useAsyncState(
-  async () => {
-    return await apiAgent.getPgpKeys()
-  },
-  undefined,
-  { throwError: true, immediate: true },
-)
+const canSubmit = computed(() => {
+  return Boolean(selectFiles.value.length && selectedKeyIds.value.length)
+})
+
+const dropZone = useTemplateRef('dropZone')
 
 useDropZone(dropZone, {
   multiple: true,
@@ -35,6 +34,14 @@ useDropZone(dropZone, {
     selectFiles.value = files.map((file) => window.electronApi.getPathForFile(file))
   },
 })
+
+const { state: pgpKeys } = useAsyncState(
+  async () => {
+    return await apiAgent.getPgpKeys()
+  },
+  undefined,
+  { throwError: true, immediate: true },
+)
 
 const browserFiles = async () => {
   const platform = window.electronApi.appInfo.platform
@@ -53,6 +60,39 @@ const browserFiles = async () => {
 const clearSelected = () => {
   selectedKeyIds.value = []
   selectFiles.value = []
+}
+
+const encrypt = async () => {
+  if (!canSubmit.value) return
+
+  try {
+    const output = await apiAgent.encrypt(toRaw(selectFiles.value), toRaw(selectedKeyIds.value))
+
+    modal
+      .open({
+        icon: 'success',
+        title: 'Encryption successful',
+        content: output.name,
+        cancelText: 'Open folder',
+      })
+      .then((bool) => {
+        if (bool === false) window.ipcRenderer.invoke('openFileManager', output.path)
+      })
+
+    clearSelected()
+  } catch (err) {
+    void modal.open({
+      icon: 'error',
+      title: 'Error',
+      content: err instanceof Error ? err.message : String(err),
+      confirmText: 'Close',
+      cancelText: false,
+    })
+  }
+}
+
+const onCancel = () => {
+  void apiAgent.abortStream()
 }
 </script>
 
@@ -103,11 +143,10 @@ const clearSelected = () => {
       <h3 class="mb-2">Recipients</h3>
       <Select v-model="selectedKeyIds" multiple>
         <SelectTrigger class="w-full">
-          <SelectValue>
-            {{
-              selectedKeyIds.length ? `${selectedKeyIds.length} selected` : 'Select recipients...'
-            }}
+          <SelectValue v-if="selectedKeyIds.length">
+            {{ selectedKeyIds.length }} selected
           </SelectValue>
+          <SelectValue v-else>Select recipients...</SelectValue>
         </SelectTrigger>
         <SelectContent>
           <SelectItem v-for="key in pgpKeys" :key="key.key_id" :value="key.key_id">
@@ -120,7 +159,9 @@ const clearSelected = () => {
     </div>
 
     <div class="mt-8">
-      <EncryptButton :files="selectFiles" :key-ids="selectedKeyIds" @success="clearSelected" />
+      <ProgressButton :disabled="!canSubmit" :on-click="encrypt" @cancel="onCancel">
+        Encrypt
+      </ProgressButton>
     </div>
   </div>
 </template>

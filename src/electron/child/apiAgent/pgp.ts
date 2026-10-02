@@ -344,9 +344,6 @@ export const pgpHandlers: ApiAgentApis = {
       name: path.basename(output),
     }
   },
-  abortEncrypt() {
-    abortController?.abort()
-  },
   async readEncryptFileInfo(filePath: string) {
     if (!db) throw new Error('DB_NOT_READY')
 
@@ -397,6 +394,9 @@ export const pgpHandlers: ApiAgentApis = {
       }),
     )
 
+    if (!privKeys.length)
+      throw new Error('The secret key required to decrypt this file was not found.')
+
     // decrypt
     const { data: decryptStream } = await openpgp.decrypt({
       message,
@@ -422,10 +422,28 @@ export const pgpHandlers: ApiAgentApis = {
       },
     })
 
-    await stream.promises.pipeline(
-      decryptStream,
-      stream.Transform.fromWeb(progressStream),
-      writable,
-    )
+    abortController = new AbortController()
+    try {
+      await stream.promises.pipeline(
+        decryptStream,
+        stream.Transform.fromWeb(progressStream),
+        writable,
+        { signal: abortController.signal },
+      )
+    } catch (err) {
+      if (String(err).includes('AbortError')) {
+        fs.rmSync(output, { force: true })
+      }
+
+      throw err
+    }
+
+    return {
+      path: output,
+      name: path.basename(output),
+    }
+  },
+  abortStream() {
+    abortController?.abort()
   },
 }
