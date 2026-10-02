@@ -221,7 +221,7 @@ const onExport = async (e?: PointerEvent) => {
           />
           <InputGroupAddon align="inline-end">
             <InputGroupButton v-show="search" size="icon-xs" @click="search = ''">
-              <XIcon />
+              <XIcon class="opacity-50" />
             </InputGroupButton>
           </InputGroupAddon>
         </InputGroup>
