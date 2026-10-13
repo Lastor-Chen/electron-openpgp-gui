@@ -22,5 +22,8 @@
       "@utility-bridger/*": ["./src/shared/utility-bridger/*"]
     }
   },
+  "vueCompilerOptions": {
+    "checkUnknownComponents": true
+  },
   "include": ["src/renderer/**/*.ts", "src/renderer/**/*.vue", "src/shared/utility-bridger/vue"]
 }

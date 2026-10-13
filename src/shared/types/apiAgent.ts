@@ -11,8 +11,12 @@ export type ApiAgentApis = {
     failed: (PgpKeyUser & { error?: string })[]
   }>
   encrypt(filePaths: string[], pubkeyIds: string[]): Promise<{ path: string; name: string }>
-  abortEncrypt(): void
-  decrypt(filePath: string): void
+  readEncryptFileInfo(filePath: string): Promise<{
+    encryptedKeys: PgpKeyUser[]
+    unknowns: number
+  }>
+  decrypt(filePath: string): Promise<{ path: string; name: string }>
+  abortStream(): void
 }
 
 export type ApiAgentEvents = {

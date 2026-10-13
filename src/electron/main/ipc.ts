@@ -1,7 +1,7 @@
 import path from 'node:path'
 
 import type { IpcMainApis } from '@shared/types/global'
-import { ipcMain, dialog, shell } from 'electron'
+import { ipcMain, dialog, shell, BrowserWindow } from 'electron'
 
 function ipcMainHandle<K extends keyof IpcMainApis>(
   channel: K,
@@ -14,8 +14,11 @@ function ipcMainHandle<K extends keyof IpcMainApis>(
 }
 
 export function setupIpcMain() {
-  ipcMainHandle('openFileBrowser', async (_, opts) => {
-    const { canceled, filePaths } = await dialog.showOpenDialog(opts)
+  ipcMainHandle('openFileBrowser', async (event, opts) => {
+    const browser = BrowserWindow.fromWebContents(event.sender)
+    if (!browser) throw new Error('Cannot find target browser.')
+
+    const { canceled, filePaths } = await dialog.showOpenDialog(browser, opts)
     if (canceled) return
 
     return filePaths.map((filePath) => ({
@@ -25,8 +28,11 @@ export function setupIpcMain() {
     }))
   })
 
-  ipcMainHandle('saveFileBrowser', async (_, opts) => {
-    const { canceled, filePath } = await dialog.showSaveDialog(opts)
+  ipcMainHandle('saveFileBrowser', async (event, opts) => {
+    const browser = BrowserWindow.fromWebContents(event.sender)
+    if (!browser) throw new Error('Cannot find target browser.')
+
+    const { canceled, filePath } = await dialog.showSaveDialog(browser, opts)
     if (canceled) return
 
     return {
