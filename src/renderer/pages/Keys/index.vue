@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Check, XIcon } from '@lucide/vue'
 import type { TPgpKey } from '@shared/types/apiAgent'
-import { useAsyncState } from '@vueuse/core'
-import { computed, h, ref } from 'vue'
+import { useAsyncState, useDropZone } from '@vueuse/core'
+import { computed, h, ref, useTemplateRef } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -26,6 +26,8 @@ import KeyModalBody from '@/pages/Keys/KeyModalBody.vue'
 import { apiAgent } from '@/rpcChild'
 
 const modal = injectConfirmModal()
+
+const dropZone = useTemplateRef('dropZone')
 
 const selectedKeyIds = ref<Set<string>>(new Set())
 const selectedKeys = computed<TPgpKey[]>(() => {
@@ -111,15 +113,7 @@ const unSelectAll = () => {
   anchorIndex.value = undefined
 }
 
-const onImport = async () => {
-  const files = await window.ipcRenderer.invoke('openFileBrowser', {
-    properties: ['openFile'],
-    filters: [{ name: 'PGP key', extensions: ['asc'] }],
-  })
-  if (!files || !files[0]) return
-
-  const { path: filePath } = files[0]
-
+const importKey = async (filePath: string) => {
   try {
     const { parsedCount, imported } = await apiAgent.importKey(filePath)
 
@@ -144,6 +138,30 @@ const onImport = async () => {
     })
   }
 }
+
+const onImport = async () => {
+  const files = await window.ipcRenderer.invoke('openFileBrowser', {
+    properties: ['openFile'],
+    filters: [{ name: 'PGP key', extensions: ['asc'] }],
+  })
+  if (!files || !files[0]) return
+
+  const { path: filePath } = files[0]
+
+  void importKey(filePath)
+}
+
+useDropZone(dropZone, {
+  multiple: false,
+  onDrop(files) {
+    const file = files?.[0]
+    if (!file) return
+
+    const filePath = window.electronApi.getPathForFile(file)
+
+    void importKey(filePath)
+  },
+})
 
 const onExport = async (e?: PointerEvent) => {
   e?.stopPropagation()
@@ -204,7 +222,7 @@ const onExport = async (e?: PointerEvent) => {
 </script>
 
 <template>
-  <div class="h-full px-4 pt-4" @click="unSelectAll">
+  <div ref="dropZone" class="h-full px-4 pt-4" @click="unSelectAll">
     <div class="mb-4 flex justify-between">
       <div class="space-x-2">
         <CreateDialog @created="getPgpKeys()" />
