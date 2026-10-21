@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import stream from 'node:stream'
 
-import { serialize, wrap } from '@mikro-orm/core'
+import { serialize } from '@mikro-orm/core'
 import type { ApiAgentApis, ApiAgentEvents, PgpKeyUser } from '@shared/types/apiAgent'
 import { createTrigger } from '@shared/utility-bridger/electron/child'
 import { ZipArchive } from 'archiver'
@@ -214,11 +214,13 @@ export const pgpHandlers: ApiAgentApis = {
           // 其餘直接 create
           if (keyInfo.private_key) {
             const pgpKey = await em.findOne(db!.PgpKey, { key_id: keyInfo.key_id })
+
             if (!pgpKey) {
               em.create(db!.PgpKey, keyInfo)
             } else if (!pgpKey.private_key) {
-              em.assign(pgpKey, {})
-              wrap(pgpKey).assign({ private_key: keyInfo.private_key })
+              em.assign(pgpKey, { private_key: keyInfo.private_key })
+            } else {
+              throw new Error('KEY_EXISTS')
             }
           } else {
             em.create(db!.PgpKey, keyInfo)
@@ -238,7 +240,7 @@ export const pgpHandlers: ApiAgentApis = {
           }
 
           return {
-            error: errorNameMap[error.name] || error.name,
+            error: errorNameMap[error.name] || error.message,
             key_id: keyInfo.key_id,
             name: keyInfo.name,
             email: keyInfo.email,
@@ -250,7 +252,7 @@ export const pgpHandlers: ApiAgentApis = {
     const grouped = Object.groupBy(results, (item) => (item.error ? 'failed' : 'success'))
 
     return {
-      parsedCount: keyInfos.length,
+      parsedCount: mergedKeyInfos.length,
       imported: grouped.success || [],
       failed: grouped.failed || [],
     }
