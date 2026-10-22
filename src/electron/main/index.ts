@@ -1,5 +1,6 @@
 import path from 'node:path'
 
+import type { ApiAgentApis, ApiAgentEvents } from '@shared/types/apiAgent'
 import { forkChild } from '@utility-bridger/electron/main'
 import { app, Menu } from 'electron'
 
@@ -22,7 +23,7 @@ app.on('activate', () => {
   openMainWindow()
 })
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // reset mac app menu to remove viewMenu
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([
@@ -33,11 +34,15 @@ app.whenReady().then(() => {
     ]),
   )
 
-  forkChild(
+  const child = forkChild<ApiAgentApis, ApiAgentEvents>(
     'apiAgent',
     path.join(process.env.APP_ROOT, 'dist-electron/electron/child/apiAgent/index.js'),
     [`--db-dir=${app.getPath('userData')}`],
   )
+
+  child.on('aaa', (val) => {
+    console.log('接收', val)
+  })
 
   setupIpcMain()
 

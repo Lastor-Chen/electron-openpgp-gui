@@ -21,6 +21,7 @@ export type ApiAgentApis = {
 
 export type ApiAgentEvents = {
   progress(percent: number): void
+  aaa(val: string): void
 }
 
 export type TPgpKey = {
