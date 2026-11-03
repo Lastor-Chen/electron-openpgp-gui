@@ -19,5 +19,10 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "vite-plugin-tsdown", "mikro-orm.config.ts"]
+  "include": [
+    "vite.config.ts",
+    "vite-plugin-tsdown",
+    "mikro-orm.config.ts",
+    "electron-builder.config.ts"
+  ]
 }
