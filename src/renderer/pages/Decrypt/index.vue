@@ -123,7 +123,7 @@ const onCancel = () => {
 
     <h3 class="mt-4 mb-2">Recipients</h3>
     <div class="h-30 px-3 py-2 border rounded-md">
-      <p v-if="!fileInfo?.recipients.length" class="text-muted-foreground">No file selected...</p>
+      <p v-if="!fileInfo" class="text-muted-foreground">No file selected...</p>
       <ul v-else class="w-204.25 text-muted-foreground">
         <PgpKeyUserList as="li" :key-infos="fileInfo.recipients" />
         <li v-if="fileInfo.unknownCount">{{ fileInfo.unknownCount }} unknown recipients</li>

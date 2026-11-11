@@ -54,7 +54,7 @@ ipcMain.handle('invoke-child', async (_event, name: string, key: string, ...args
  * const listener = (val) => {}
  * myChild.on('myEvent', listener)
  * myChild.removeListener('myEvent', listener)
- * myChild.removeListener('myEvent') // remove all
+ * myChild.removeAllListeners('myEvent')
  * @param name child process name
  * @param modulePath entry file absolute path
  * @param argv process.argv
