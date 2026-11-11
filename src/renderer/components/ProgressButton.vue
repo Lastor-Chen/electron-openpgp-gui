@@ -31,7 +31,13 @@ const onClick = async () => {
     await props.onClick()
   } finally {
     open.value = false
+    progress.value = 0
   }
+}
+
+const onCancel = () => {
+  emits('cancel')
+  progress.value = 0
 }
 </script>
 
@@ -58,7 +64,7 @@ const onClick = async () => {
 
       <DialogFooter>
         <DialogClose as-child>
-          <Button variant="outline" size="sm" @click="emits('cancel')">Cancel</Button>
+          <Button variant="outline" size="sm" @click="onCancel">Cancel</Button>
         </DialogClose>
       </DialogFooter>
     </DialogContent>
