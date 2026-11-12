@@ -1,27 +1,39 @@
 # Electron OpenPGP GUI
 
-An electron + vite boilerplate for myself.
+一個 Vite + Vue3 + Typescript 的 Electron Desktop App，具有 OpenPGP 金鑰管理與基本檔案加解密功能。此專案用於個人研究 Electron 如何整合 vite 前端架構、主子程序通訊機制、以及各項基礎建設。
 
-個人研究 electron + vite 專案基礎建設的 boilerplate，並以 OpenPGP.js 非對稱加解密為命題，實際做一個 App 來試驗此架構。
+TODO
+
+- [ ] App 截圖
+- [x] App Features 太過細節
+- [x] Tech Keywords 改 Tech Stack 表格, 搬到前面
+- [x] 搬移 usage example
+- [x] 改 Overview 前言
+- [x] build 流程圖
+- [x] IPC 流程圖
+- [ ] Boilerplate Features -> 改為 Technical Highlights
+- [ ] Remove App 簡化, 改為 Uninstallation
 
 ## App Features
 
-- PGP Keys 頁
-  - list keys table
-  - 前端 keyword filter
-  - create new key pair
-  - 匯入 .asc key 文件、支援單檔內含多把 keys 的格式
-  - 匯出 .asc key(s) 文件、可多選、可選擇是否一同匯出私鑰
-  - 比照 os 邏輯，支援 table 點擊 shift or ctrl (cmd) 組合鍵 click 多選
-  - 選取後可開啟右鍵選單，進行 export or delete
-- Encrypt 頁
-  - 點擊開啟 file explorer 選單，選取要加密的檔案，可多選、可拖曳
-  - 選擇 recipients 的公鑰，可多選
-  - 會先 zip pack 後再加密到與 input 同目錄下，副檔名為 `.zip.pgp`
-- Decrypt 頁
-  - 點擊開啟 file explorer 選單，選取要解密的檔案，可拖曳
-  - 顯示 recipients info
-  - 會解密到與 input 同目錄下，維持 `.zip` 不解壓
+(圖)
+
+- PGP key pairs 建立與管理，支援匯入、匯出
+- 支援 os 原生風格的 shift + click 範圍選取，以及 ctrl (cmd) + click 加、減選操作
+- 使用 PGP key 做檔案加、解密，支援直接拖曳檔案
+- 解密預覽 Recipients 資訊
+
+## Tech Stack
+
+| Category     | Technologies                   |
+| ------------ | ------------------------------ |
+| Language     | Typescript 6                   |
+| Desktop      | Electron                       |
+| Database     | SQLite, MikroORM               |
+| Frontend     | Vue 3, shadcn-vue, Tailwind    |
+| Bundler      | Vite, tsdown, electron-builder |
+| Cryptography | OpenPGP.js                     |
+| Tooling      | pnpm 11, Oxc                   |
 
 ## Download Unsigned App
 
@@ -68,7 +80,7 @@ C:\Users\<user>\AppData\Roaming\electron-openpgp-gui\
 /Users/<user>/Library/Application Support/electron-openpgp-gui/
 ```
 
-## Quick Start
+## Development Start
 
 - Node.js >= v24
 - pnpm >= v11
@@ -96,23 +108,53 @@ pnpm dev
 
 ```
 root/
+  dist/                      # vite build renderer output (git ignored)
+  dist-electron/             # tsdown build electron output (git ignored)
+  release/                   # electron-builder build output (git ignored)
   src/
     electron/
-      child/             # Electron child process (UtilityProcess)
-        apiAgent/
-          sqlite/        # Sqlite and MikroORM module
-      main/              # Electron main process
-      preload/           # Preload CommonJS scripts
-    renderer/            # Renderer vue3 frontend app
-      components/
-        ui/              # shadcn-vue source components
+      child/                 # electron UtilityProcess 子程序
+        apiAgent/sqlite      # sqlite module
+      main/                  # electron 主程序與進入點
+      preload/               # electron preload scripts
+    renderer/                # frontend vite vue3 app
+      components/ui/         # shadcn-vue
     shared/
-      types/             # 共用 types
-      utility-bridger/   # 子程序通訊 module
-  vite-plugin-tsdown/    # 自製 vite plugin 串接 tsdown, 編譯 electron typescript
+      utility-bridger/       # 自製子程序通訊 module
+  vite-plugin-tsdown/        # 自製 vite plugin 整合 vite 與 electron
 ```
 
-## Boilerplate Features
+Multi-target build pipeline 示意圖
+
+```mermaid
+flowchart LR
+  subgraph Src["Typescript Source Code"]
+    direction LR
+    EShared["src/shared/<br>Shared"]
+    ESource["src/electron/<br/>Electron"]
+    Vue["src/renderer/<br>Vue3"]
+
+    EShared --> ESource
+    EShared --> Vue
+  end
+
+  Tsdown["tsdown"]
+  Dist["dist/"]
+  DistE["dist-electron/"]
+
+  subgraph Bundled["Javascript Distribution Code"]
+    direction LR
+    Dist & DistE --> electron["Start Electron"]
+  end
+
+  ESource --> Tsdown
+  Vue --> Vite
+  Vite -.-> |Integration| vite-plugin-tsdown -.-> Tsdown
+  Tsdown --> |unbundle| DistE
+  Vite --> |bundle| Dist
+```
+
+## Technical Highlights
 
 - 使用 package.json 新的 `devEngines.packageManager` 實現 only allow pnpm
 - 使用 TypeScript Project References 整合 node.js / browser tsconfig，一次性 type check
@@ -132,228 +174,31 @@ root/
 - 提供封裝好的 `spawnElectron()` 做 electron 的 watch re-start
 - 繼承 vite importMetaEnv
 
-在 `vite.config.ts` 設定 plugins
+[See Usage](./vite-plugin-tsdown/README.md)
 
-```ts
-// vite.config.ts
-import type { InlineConfig } from 'tsdown'
-import { defineConfig } from 'vite'
-import { tsdownPlugin, spawnElectron } from './vite-plugin-tsdown/src/index.ts'
+### utility-bridger 子程序 RPC 通訊機制
 
-export default defineConfig(({ command }) => {
-  const isDev = command === 'serve'
+```mermaid
+flowchart LR
+  Renderer["Renderer"]
+  Main["Main"]
+  Child["Child"]
 
-  return {
-    plugins: [
-      tsdownPlugin({
-        // dev 監聽要由 tsdown 打包的 files
-        viteWatch: ['src/electron/**', 'src/shared/**'],
-        // 使用內部包好的 spawnElectron 在 tsdown build 後啟動 electron
-        onAllSuccess: isDev ? () => spawnElectron() : undefined,
-        builds: [
-          {
-            // same with tsdown config
-          },
-        ],
-      }),
-    ],
-  }
-})
+  Renderer --> |invoke| Main --> |invoke| Child
+  Child --> |result| Main --> |result| Renderer
 ```
 
-在 electron 設定 BrowserWindow 連線 vite dev server
-
-```ts
-// electron
-import { app, BrowserWindow } from 'electron'
-
-app.whenReady().then(() => {
-  const win = new BrowserWindow()
-
-  // vite-plugin-tsdown 內部會繼承並處理 vite 環境變數
-  if (import.meta.env.DEV) {
-    // dev 時, 指向 vite dev server url
-    win.loadURL('http://localhost:5173/')
-  } else {
-    // prod 時, 指向 dist/index.html
-    win.loadFile('path/to/dist/index.html')
-  }
-})
-```
-
-#### Options
-
-```ts
-type TsdownPluginOptions = {
-  /** 搭配 onAllSuccess 使用, 改用 vite watch 替代 tsdown watch */
-  viteWatch?: string[]
-  /** tsdown builds 全部完成後的 callback, 可在此啟動 electron 或其他 node.js app */
-  onAllSuccess?: (signal: AbortSignal) => void
-  /** 同 tsdown.build 的 InlineConfig, 接受 array 做 multiple build task */
-  builds: InlineConfig[]
-}
-```
-
-tsdown 自己有 `watch` 與 `onSuccess`，但他是 array 的每個 build task 各自獨立，沒有整體的 afterBuilds hook 可用，所以另外做了 `viteWatch` 與 `onAllSuccess` 來補強。
-
-### UtilityProcess 子程序通訊機制
+使用 electron UtilityProcess 建立子程序，並對其做一層 type-safe 的 RPC 包裝，讓 renderer 可以方便的呼叫 child 提供的 API。需增加子程序時，也可快速復用。
 
 - 與主程序隔離，用於執行 Native API 或較重的運算，不阻塞 electron 主程序
-- 支援 type-safe 智能推斷
+- 使用 electron UtilityProcess 建立子程序, 自動跟隨 electron main 關閉
+- 統一定義 child API type，讓 renderer 能智能推斷，並進行程式化 type check
 - 可從 main / renderer 或不同 child 之間，呼叫 child API
 - 可從 child 發送事件，於 main / renderer 或其他 child 接收、執行 callback
 - 將 child 發送的事件值，於 renderer 包裝成 Vue ref，讓 child 能主動 trigger 前端 re-render
 - Browser devtools debug logger
 
-#### Child Process
-
-擴充 `@utility-bridger` 內部 interface 來定義 child name，提供 type 智能提示。
-
-```ts
-// src/config-env.d.ts
-declare module '@utility-bridger/types.ts' {
-  interface ChildNames {
-    myChild: unknown // add custom child process name
-  }
-}
-```
-
-於 `src/shared/types/<child_name>.ts` 定義 child 要提供的 API types。
-
-```ts
-// src/shared/types/myChild.ts
-export type MyChildApis = {
-  echo(txt: string): void
-  // ...
-}
-
-export type MyChildEvents = {
-  stateUpdated(state: number): void
-  // ...
-}
-```
-
-於 `src/electron/child/<name>/index.ts` 建立子程序 entry file。
-
-```ts
-// src/electron/child/myChild/index.ts
-import type { MyChildApis, MyChildEvents } from '@shared/types/myChild'
-import {
-  handleUncaught,
-  bridgeRpcHandler,
-  addConsoleLogPrefix,
-  createTrigger,
-  createRpcChild,
-} from '@utility-bridger/electron/child'
-
-// 將 uncaught error 傳給 renderer
-handleUncaught()
-
-// 設定 node.js console.log 前綴, 方便 debug 辨識
-addConsoleLogPrefix('[MyChild]')
-
-// 用於傳遞事件的封裝
-const trigger = createTrigger<MyChildEvents>()
-
-// 實作子程序要提供的 API functions
-bridgeRpcHandler({
-  echo(txt) {
-    // 發送事件給 main 與 renderer
-    trigger('stateUpdated', 1)
-
-    return `echo ${txt}`
-  },
-  // ...
-} satisfies MyChildApis)
-
-// 若有多個 child 也能互相溝通
-const someChild = createRpcChild<SomeChildApis, SomeChildEvents>('someChild')
-someChild.invoke('foo')
-someChild.on('someEvent', () => {})
-```
-
-#### Main Process
-
-於 `src/electron/main/index.ts` fork 出子程序，可呼叫 child API 或監聽 events。
-
-```ts
-// src/electron/main/index.ts
-import type { MyChildApis, MyChildEvents } from '@shared/types/myChild'
-import { app } from 'electron'
-import { forkChild } from '@utility-bridger/electron/main'
-
-app.whenReady().then(async () => {
-  const myChild = forkChild<MyChildApis, MyChildEvents>('childName', 'path/to/dist/child/entry.js')
-
-  // invoke child's function
-  const { result, error } = await myChild.invoke('echo', 'Hello Child')
-  console.log(result) // "Hello Child"
-
-  // listen events from child
-  const listener = (state: number) => console.log(state)
-  myChild.on('stateUpdated', listener)
-  myChild.removeListener('stateUpdated', listener)
-  myChild.removeAllListeners('stateUpdated')
-})
-```
-
-#### Renderer Process
-
-在前端 `src/renderer/rpcChild.ts` 建立 child 的 API caller。
-
-```ts
-// src/renderer/rpcChild.ts
-import type { MyChildApis, MyChildEvents } from '@shared/types/myChild'
-import { wrapRpcChild } from '@utility-bridger/vue'
-
-export const myChild = wrapRpcChild<MyChildApis, MyChildEvents>('myChild')
-```
-
-監聽 child 發送的 event，將接收到的值包裝成 Vue composables 做成響應式 ref。
-
-```ts
-// src/renderer/composables/useChildRef.ts
-import type { MyChildApis, MyChildEvents } from '@shared/types/myChild'
-
-export const myChildRef = createChildRef<MyChildApis, MyChildEvents>('myChild')
-```
-
-在 Vue 中呼叫 child API 以及使用 child event ref。
-
-```vue
-<!-- src/renderer/App.vue -->
-<script setup lang="ts">
-import { onMounted, onScopeDispose } from 'vue'
-
-import { myChildRef } from '@/composables/useChildRef'
-import { myChild } from '@/rpcChild'
-
-// child 事件值的 vue ref 包裝, 當 child trigger 時自動響應
-const state = myChildRef('stateUpdated', { initValue: 0 })
-
-// 從 renderer 呼叫 child API
-const onClick = async () => {
-  const result = await myChild.echo('Hello Child')
-}
-
-// 監聽 child onCrash 事件, 讓 renderer 可以反應出來
-onMounted(() => {
-  const clearChildListener = myChild.onCrash((err) => window.alert(`MyChild crashed: ${err}`))
-  onScopeDispose(() => clearChildListener())
-})
-</script>
-
-<template>
-  <button @click="onClick">Click {{ state }}</button>
-</template>
-```
-
-`@/rpcChild` 內的 `wrapRpcChild` 包裝內含 debug logger，會在 devtools 顯示 I/O 資訊，可用 `window.allowDevLog` boolean 值手動開關，production 時為 `false`
-
-```
-[myChild] Call echo: ['Hello Child']
-[myChild] Response echo: echo Hello Child
-```
+[See Usage](./src/shared/utility-bridger/README.md)
 
 ### Sqlite runtime migration
 
@@ -446,14 +291,3 @@ defineConfig({
 `.snapshot-{db_name}.json` 是 mikro-orm cli 判斷 schema 差異用的記錄檔，需要一起進 git 版控。打包後的 dist 不需要包含。
 
 更多資訊: [MikroORM Snapshots](https://mikro-orm.io/docs/migrations#snapshots)
-
-## Tech Keywords
-
-- typescript6
-- pnpm11
-- electron45
-- openpgp, zip archive
-- sqlite, mikro-orm
-- vue3, shadcn-vue, tailwind, VueUse, pinia
-- vite8, tsdown, electron-builder
-- oxlint, oxfmt, oxc-node
