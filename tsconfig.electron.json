@@ -35,5 +35,5 @@
       "@utility-bridger/*": ["./src/shared/utility-bridger/*"]
     }
   },
-  "include": ["src/electron", "src/shared/utility-bridger/electron"]
+  "include": ["src/electron", "src/shared/utility-bridger/electron", "mikro-orm.config.ts"]
 }

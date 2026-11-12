@@ -1,6 +1,6 @@
 import { Migration } from '@mikro-orm/migrations'
 
-import { getAppId } from '../appIdUtils.ts'
+import { getAppId } from '@/child/apiAgent/sqlite/appIdUtils'
 
 export class Migration20260921024018 extends Migration {
   override name = 'Migration20260921024018'

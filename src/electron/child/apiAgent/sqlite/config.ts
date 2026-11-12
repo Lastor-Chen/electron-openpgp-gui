@@ -4,8 +4,8 @@ import path from 'node:path'
 import { Migrator } from '@mikro-orm/migrations'
 import { defineConfig, SqliteDriver, NodeSqliteDialect } from '@mikro-orm/sql'
 
-import { Migration20260921024018 } from './migrations/Migration20260921024018.ts'
-import { PgpKeySchema } from './schemas/pgpKey.ts'
+import { Migration20260921024018 } from '@/child/apiAgent/sqlite/migrations/Migration20260921024018'
+import { PgpKeySchema } from '@/child/apiAgent/sqlite/schemas/pgpKey'
 
 const migrationFiles = fs.globSync('migrations/*.{js,ts}', { cwd: import.meta.dirname })
 export const appMigrationCount = migrationFiles.length

@@ -35,7 +35,7 @@
   "devDependencies": {
     "@mikro-orm/cli": "^7.1.14",
     "@openpgp/web-stream-tools": "^0.3.1",
-    "@oxc-node/cli": "^0.1.0",
+    "@oxc-node/cli": "^1.0.1",
     "@tailwindcss/vite": "^4.3.3",
     "@types/archiver": "^8.0.0",
     "@types/node": "^24.13.3",
@@ -61,5 +61,9 @@
   },
   "engines": {
     "node": "^24.22.1"
+  },
+  "mikro-orm": {
+    "tsLoader": "oxc",
+    "tsConfigPath": "./tsconfig.electron.json"
   }
 }
